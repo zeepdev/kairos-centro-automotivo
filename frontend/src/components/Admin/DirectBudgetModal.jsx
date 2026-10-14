@@ -261,7 +261,7 @@ const DirectBudgetModal = ({ onClose, onBudgetCreated }) => {
         {/* Cabeçalho */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #22222a', paddingBottom: '15px' }}>
           <div>
-            <h2 style={{ margin: 0, color: '#e10600', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ margin: 0, color: 'var(--accent-color, #ae0d05)', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               ➕ Novo Orçamento Direto
             </h2>
             <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Cadastre os dados do veículo, peças e mão de obra atribuída ao mecânico</span>
@@ -316,7 +316,7 @@ const DirectBudgetModal = ({ onClose, onBudgetCreated }) => {
 
           {/* 2. DADOS DO VEÍCULO (CONFORME PRINT DO USUÁRIO) */}
           <div style={{ marginBottom: '25px', background: '#1a1a20', padding: '15px', borderRadius: '10px', border: '1px solid #2a2a35' }}>
-            <h4 style={{ margin: '0 0 12px 0', color: '#fff', fontSize: '1rem', borderLeft: '3px solid #e10600', paddingLeft: '8px' }}>
+            <h4 style={{ margin: '0 0 12px 0', color: '#fff', fontSize: '1rem', borderLeft: '3px solid var(--accent-color, #ae0d05)', paddingLeft: '8px' }}>
               Veículo
             </h4>
             

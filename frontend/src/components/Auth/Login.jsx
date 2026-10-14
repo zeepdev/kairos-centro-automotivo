@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import { translateError } from '../../lib/errorTranslations';
@@ -26,13 +26,25 @@ const Login = () => {
       let loginEmail = email;
       const cpfLimpo = email.replace(/[^0-9]/g, '');
       if (cpfLimpo.length === 11 && !email.includes('@')) {
-        loginEmail = `${cpfLimpo}@kadosh.temp`;
+        loginEmail = `${cpfLimpo}@kairos.temp`;
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      let { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: senha
       });
+
+      // Suporte a usuários existentes cadastrados com @kadosh.temp
+      if (error && cpfLimpo.length === 11 && !email.includes('@')) {
+        const retry = await supabase.auth.signInWithPassword({
+          email: `${cpfLimpo}@kadosh.temp`,
+          password: senha
+        });
+        if (!retry.error) {
+          data = retry.data;
+          error = null;
+        }
+      }
 
       if (error) throw new Error(error.message);
 
@@ -51,8 +63,8 @@ const Login = () => {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0c', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 20px' }}>
       <form onSubmit={handleSubmit} className="glass" style={{ padding: '40px', maxWidth: '400px', width: '100%', borderRadius: '12px' }}>
-        <h2 style={{ color: '#e10600', marginBottom: '10px', textAlign: 'center' }}>Login do Cliente</h2>
-        <p style={{ color: '#aaa', marginBottom: '30px', textAlign: 'center' }}>Acesse sua área restrita.</p>
+        <h2 style={{ color: 'var(--accent-color, #ae0d05)', marginBottom: '10px', textAlign: 'center' }}>Login do Cliente</h2>
+        <p style={{ color: '#aaa', marginBottom: '30px', textAlign: 'center' }}>Acesse sua área restrita Kairós.</p>
         
         <div className="form-group">
           <label>E-mail ou CPF</label>
@@ -75,7 +87,7 @@ const Login = () => {
         </button>
 
         <p style={{ textAlign: 'center', marginTop: '20px', color: '#aaa' }}>
-          Não tem conta? <Link to="/cadastro" style={{ color: '#e10600', fontWeight: 'bold' }}>Cadastre-se</Link>
+          Não tem conta? <Link to="/cadastro" style={{ color: 'var(--accent-color, #ae0d05)', fontWeight: 'bold' }}>Cadastre-se</Link>
         </p>
       </form>
     </div>

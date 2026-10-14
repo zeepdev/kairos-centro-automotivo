@@ -1,7 +1,8 @@
-// Dados fixos da Kadosh Auto Center.
+// Dados fixos da Kairós Centro Automotivo.
 // Alterar aqui reflete em todos os lugares que importam esse arquivo (PDF, footer, contatos).
 export const OFICINA = {
-  nome: 'Kadosh Auto Center',
+  nome: 'Kairós Centro Automotivo',
+  nomeCurto: 'Kairós',
   cnpj: '61.004.527/0001-89',
   endereco: 'Av. Goiás, Qd 43 - Lt 18 Nº 6144 - St. Urias Magalhães, Goiânia - GO, 74565-250',
   telefone: '(62) 8152-9741',

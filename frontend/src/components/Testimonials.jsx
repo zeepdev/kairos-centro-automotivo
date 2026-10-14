@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 const Testimonials = () => {
@@ -35,7 +35,7 @@ const Testimonials = () => {
         <div style={{ textAlign: 'center', marginBottom: '60px' }}>
           <span className="eyebrow" style={{ justifyContent: 'center' }}>Depoimentos</span>
           <h2 className="section-title" style={{ marginBottom: '10px' }}>O que dizem nossos clientes</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '25px' }}>A satisfação de quem confia o seu veículo à Kadosh Auto Center.</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '25px' }}>A satisfação de quem confia o seu veículo ao Kairós Centro Automotivo.</p>
           
           {/* Google Reviews Badge */}
           <div style={{
@@ -66,11 +66,11 @@ const Testimonials = () => {
               <span style={{ fontSize: '0.8rem', color: '#aaa' }}>Excelente no Google Reviews</span>
             </div>
             <a 
-              href="https://www.google.com/maps/search/?api=1&query=Kadosh+Auto+Center+Av.+Goi%C3%A1s+6144+Goi%C3%A2nia"
+              href="https://www.google.com/maps/search/?api=1&query=Kairos+Centro+Automotivo+Av.+Goi%C3%A1s+6144+Goi%C3%A2nia"
               target="_blank"
               rel="noreferrer"
               style={{
-                background: 'var(--accent-color, #e10600)',
+                background: 'var(--accent-color, #ae0d05)',
                 color: '#fff',
                 textDecoration: 'none',
                 padding: '8px 16px',

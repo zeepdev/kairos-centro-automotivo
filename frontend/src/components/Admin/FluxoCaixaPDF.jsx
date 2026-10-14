@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
   },
   header: {
     borderBottomWidth: 2,
-    borderBottomColor: '#e10600',
+    borderBottomColor: '#ae0d05',
     paddingBottom: 15,
     marginBottom: 20,
     display: 'flex',
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#e10600',
+    color: '#ae0d05',
     letterSpacing: 1,
   },
   logoSubtext: {
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#e10600',
+    borderLeftColor: '#ae0d05',
     paddingLeft: 6,
     marginTop: 5,
   },
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     color: '#c92a2a',
   },
   summaryHeader: {
-    backgroundColor: '#e10600',
+    backgroundColor: '#ae0d05',
     color: '#ffffff',
     padding: 8,
     borderRadius: 4,
@@ -263,8 +263,8 @@ export const FluxoCaixaPDF = ({ data }) => {
         {/* Cabeçalho */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>KADOSH</Text>
-            <Text style={styles.logoSubtext}>Auto Center</Text>
+            <Text style={styles.logoText}>KAIRÓS</Text>
+            <Text style={styles.logoSubtext}>Centro Automotivo</Text>
           </View>
           <View style={styles.docTitleContainer}>
             <Text style={styles.docTitle}>Fechamento de Caixa</Text>
@@ -385,7 +385,7 @@ export const FluxoCaixaPDF = ({ data }) => {
         </View>
 
         {/* Resumo Consolidado com Status de Conciliação */}
-        <View style={[styles.summaryHeader, { backgroundColor: Math.abs(diferencaConciliacao) < 0.01 ? '#2b8a3e' : '#e10600' }]}>
+        <View style={[styles.summaryHeader, { backgroundColor: Math.abs(diferencaConciliacao) < 0.01 ? '#2b8a3e' : '#ae0d05' }]}>
           <Text style={styles.summaryHeaderText}>SALDO CONSOLIDADO DECLARADO (REAL)</Text>
           <Text style={styles.summaryHeaderText}>{formatCurrency(saldoFisicoReal)}</Text>
         </View>
@@ -410,7 +410,7 @@ export const FluxoCaixaPDF = ({ data }) => {
         )}
 
         {/* Rodapé */}
-        <Text style={styles.footer}>Kadosh Auto Center - Confiança e Qualidade em Serviços Automotivos</Text>
+        <Text style={styles.footer}>Kairós Centro Automotivo - Confiança e Qualidade em Serviços Automotivos</Text>
 
       </Page>
     </Document>

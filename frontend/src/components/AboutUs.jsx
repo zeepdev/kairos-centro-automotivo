@@ -14,7 +14,7 @@ const AboutUs = () => {
       <div className="container about-grid">
         <Reveal className="about-media" dir="left">
           <div className="about-frame">
-            <img src="/foto1.jpeg" alt="Estrutura da Kadosh Auto Center" />
+            <img src="/foto1.jpeg" alt="Estrutura do Kairós Centro Automotivo" />
             <span className="about-frame-glow" />
           </div>
         </Reveal>
@@ -23,7 +23,7 @@ const AboutUs = () => {
           <span className="eyebrow">Sobre Nós</span>
           <h2 className="section-title">Mais que uma oficina,<br />somos seu parceiro<br />na estrada.</h2>
           <p style={{ color: 'var(--text-muted)', marginTop: '18px' }}>
-            Na Kadosh Auto Center, cada serviço é feito com atenção aos detalhes,
+            No Kairós Centro Automotivo, cada serviço é feito com atenção aos detalhes,
             equipamentos de alta tecnologia e uma equipe especializada pronta para te atender.
           </p>
           <p style={{ color: 'var(--text-muted)', marginTop: '12px' }}>

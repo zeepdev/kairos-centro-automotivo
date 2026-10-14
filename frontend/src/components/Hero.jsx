@@ -46,7 +46,7 @@ const Hero = () => {
       <div className="container hero-grid">
         {/* Texto */}
         <div className="hero-text animate-fade-in">
-          <span className="eyebrow">Kadosh Auto Center</span>
+          <span className="eyebrow">{OFICINA.nome}</span>
           <h1>
             Cuidado que<br />você sente.<br />
             <span className="accent">Confiança que<br />você merece.</span>
@@ -74,7 +74,7 @@ const Hero = () => {
         {/* Foto */}
         <div className="hero-photo">
           <div className="hp-frame">
-            <img className="hp-img" src="/foto1.jpeg" alt="Fachada da Kadosh Auto Center" />
+            <img className="hp-img" src="/foto1.jpeg" alt={`Fachada da ${OFICINA.nome}`} />
             <span className="hp-shade" />
             <span className="hp-scan" />
           </div>

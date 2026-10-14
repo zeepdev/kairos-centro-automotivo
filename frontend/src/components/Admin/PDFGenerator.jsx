@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, pdf } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, pdf, Image } from '@react-pdf/renderer';
 import { OFICINA } from '../../config/oficina';
-import { supabase } from '../../lib/supabase';
 import { calcularPrioridade } from '../../lib/prioridade';
 import { consultarPlaca } from '../../lib/placaApi';
 
@@ -9,7 +8,7 @@ const styles = StyleSheet.create({
   page: { padding: 30, fontSize: 10, fontFamily: 'Helvetica' },
   header: { flexDirection: 'row', justifyContent: 'space-between', borderBottom: '2px solid #1a365d', paddingBottom: 10, marginBottom: 15 },
   shopInfo: { width: '60%' },
-  shopName: { fontSize: 18, fontWeight: 'bold', color: '#e10600', marginBottom: 2 },
+  shopName: { fontSize: 18, fontWeight: 'bold', color: '#ae0d05', marginBottom: 2 },
   shopSub: { fontSize: 9, color: '#666', marginBottom: 1 },
   docInfo: { width: '40%', textAlign: 'right' },
   title: { fontSize: 16, fontWeight: 'bold', marginBottom: 5, color: '#1a365d' },
@@ -39,7 +38,7 @@ const styles = StyleSheet.create({
   prioridadeValor: { fontSize: 14, fontWeight: 'bold' }
 });
 
-const KadoshPDF = ({ clientData, items, labor, customTotal }) => {
+const KairosPDF = ({ clientData, items, labor, customTotal }) => {
   const totalItems = items.reduce((acc, item) => acc + (item.qtd * item.unit), 0);
   const totalLabor = labor.reduce((acc, item) => acc + (item.qtd * item.unit), 0);
   const subtotalOriginal = totalItems + totalLabor;
@@ -61,7 +60,7 @@ const KadoshPDF = ({ clientData, items, labor, customTotal }) => {
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.shopInfo}>
-            <Text style={styles.shopName}>{OFICINA.nome.toUpperCase()}</Text>
+            <Image src="/logo_kairos_light.png" style={{ width: 140, height: 44, marginBottom: 6, objectFit: 'contain' }} />
             <Text style={styles.shopSub}>CNPJ: {OFICINA.cnpj}</Text>
             <Text style={styles.shopSub}>{OFICINA.endereco}</Text>
             <Text style={styles.shopSub}>Tel: {OFICINA.telefone} | {OFICINA.email}</Text>
@@ -439,7 +438,7 @@ const PDFGenerator = ({ initialData, onClose, onUpdateSuccess }) => {
     setDriveStatus('loading');
     try {
       const formData = new FormData();
-      const filename = `Orcamento_Kadosh_${clientData.placa || clientData.nome || 'Novo'}.pdf`;
+      const filename = `Orcamento_Kairos_${clientData.placa || clientData.nome || 'Novo'}.pdf`;
       formData.append('pdf', blob, filename);
       formData.append('fileName', filename);
 
@@ -465,13 +464,13 @@ const PDFGenerator = ({ initialData, onClose, onUpdateSuccess }) => {
     setDownloading(true);
     try {
       const finalVal = customTotalInput !== '' ? parseFloat(customTotalInput) : grandTotal;
-      const doc = <KadoshPDF clientData={clientData} items={items} labor={labor} customTotal={finalVal} />;
+      const doc = <KairosPDF clientData={clientData} items={items} labor={labor} customTotal={finalVal} />;
       const blob = await pdf(doc).toBlob();
       
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Orcamento_Kadosh_${clientData.placa || clientData.nome || 'Novo'}.pdf`;
+      link.download = `Orcamento_Kairos_${clientData.placa || clientData.nome || 'Novo'}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

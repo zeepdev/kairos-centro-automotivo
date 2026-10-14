@@ -515,8 +515,8 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
     return (
       <div className="dash-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <form onSubmit={handleLogin} className="glass" style={{ padding: '50px 40px', maxWidth: '400px', width: '100%' }}>
-          <h2 style={{ color: '#e10600', marginBottom: '10px', textAlign: 'center' }}>Acesso Restrito</h2>
-          <p style={{ color: '#aaa', marginBottom: '30px', textAlign: 'center' }}>Área exclusiva da Gestão Kadosh</p>
+          <h2 style={{ color: 'var(--accent-color, #ae0d05)', marginBottom: '10px', textAlign: 'center' }}>Acesso Restrito</h2>
+          <p style={{ color: '#aaa', marginBottom: '30px', textAlign: 'center' }}>Área exclusiva da Gestão Kairós</p>
 
           <div className="form-group">
             <label>E-mail</label>
@@ -597,13 +597,13 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
           <div>
-            <h1 style={{ fontSize: '2.5rem', color: '#e10600', margin: 0 }}>Painel Kadosh</h1>
+            <h1 style={{ fontSize: '2.5rem', color: 'var(--accent-color, #ae0d05)', margin: 0 }}>Painel Kairós</h1>
             <p style={{ color: '#aaa', margin: '5px 0 0 0' }}>Gerenciamento de Orçamentos e Agendamentos</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button onClick={() => setShowDirectBudget(true)} className="btn" style={{ background: '#e10600', color: '#fff', border: 'none', fontWeight: 'bold' }}>+ Novo Orçamento Direto</button>
+            <button onClick={() => setShowDirectBudget(true)} className="btn" style={{ background: 'var(--accent-color, #ae0d05)', color: '#fff', border: 'none', fontWeight: 'bold' }}>+ Novo Orçamento Direto</button>
             <button onClick={() => setShowQuickRegister(true)} className="btn" style={{ background: '#10b981', color: '#fff', border: 'none' }}>+ Cadastrar Cliente</button>
-            <button onClick={handleLogout} className="btn" style={{ background: 'transparent', border: '1px solid #e10600', color: '#e10600' }}>Sair</button>
+            <button onClick={handleLogout} className="btn" style={{ background: 'transparent', border: '1px solid var(--accent-color, #ae0d05)', color: 'var(--accent-color, #ae0d05)' }}>Sair</button>
             <Link to="/" className="btn" style={{ background: '#333' }}>Voltar ao Site</Link>
           </div>
         </div>
@@ -613,8 +613,8 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
             <h3 style={{ margin: 0, fontSize: '2rem', color: '#fff' }}>{totalAtendimentos}</h3>
             <p style={{ margin: '5px 0 0 0', color: '#aaa' }}>Total de Registros</p>
           </div>
-          <div className="glass" style={{ padding: '20px', textAlign: 'center', borderBottom: '3px solid #e10600' }}>
-            <h3 style={{ margin: 0, fontSize: '2rem', color: '#e10600' }}>{pendentes}</h3>
+          <div className="glass" style={{ padding: '20px', textAlign: 'center', borderBottom: '3px solid var(--accent-color, #ae0d05)' }}>
+            <h3 style={{ margin: 0, fontSize: '2rem', color: 'var(--accent-color, #ae0d05)' }}>{pendentes}</h3>
             <p style={{ margin: '5px 0 0 0', color: '#aaa' }}>Pendentes</p>
           </div>
           <div className="glass" style={{ padding: '20px', textAlign: 'center', borderBottom: '3px solid #4ade80' }}>
@@ -635,7 +635,7 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
             onClick={() => setActiveTab('atendimentos')}
             style={{ 
               padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none',
-              background: activeTab === 'atendimentos' ? '#e10600' : '#222',
+              background: activeTab === 'atendimentos' ? 'var(--accent-color, #ae0d05)' : '#222',
               color: '#fff', fontWeight: 'bold'
             }}
           >

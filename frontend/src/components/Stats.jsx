@@ -22,10 +22,10 @@ const Stats = () => {
     <section className="stats-section">
       <div className="container stats-wrap">
         <Reveal className="stats-intro" dir="left">
-          <span className="eyebrow">Por que escolher a Kadosh?</span>
+          <span className="eyebrow">Por que escolher o Kairós?</span>
           <h2 className="section-title">Excelência que você sente,<br />resultados que você confia.</h2>
           <p style={{ color: 'var(--text-muted)', marginTop: '14px', maxWidth: '420px' }}>
-            Na Kadosh Auto Center, cada detalhe faz a diferença. Trabalhamos para
+            No Kairós Centro Automotivo, cada detalhe faz a diferença. Trabalhamos para
             entregar o melhor para você e para o seu veículo.
           </p>
         </Reveal>

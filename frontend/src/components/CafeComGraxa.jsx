@@ -403,7 +403,7 @@ const CafeComGraxa = () => {
               <img src="/cafe-graxa-logo.PNG" alt="Emblema Café com Graxa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
 
-            <span className="eyebrow" style={{ color: colors.primary }}>Kadosh Auto Center</span>
+            <span className="eyebrow" style={{ color: colors.primary }}>Kairós Centro Automotivo</span>
             
             <h1 style={{
               fontFamily: "'Anton', sans-serif",
@@ -457,7 +457,7 @@ const CafeComGraxa = () => {
           {/* Lado Direito: Foto Principal do Evento */}
           <div className="hero-cafe-photo animate-fade-in" style={{ animationDelay: '150ms' }}>
             <div className="hcp-frame">
-              <img className="hcp-img" src="/images/cafe-galeria-2-4.jpg" alt="Mulheres no Café com Graxa Kadosh" />
+              <img className="hcp-img" src="/images/cafe-galeria-2-4.jpg" alt="Mulheres no Café com Graxa Kairós" />
               <span className="hcp-shade" />
               <span className="hcp-scan" />
             </div>

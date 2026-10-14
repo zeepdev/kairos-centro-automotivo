@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { translateError } from '../../lib/errorTranslations';
@@ -46,7 +46,7 @@ const ResetPassword = () => {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0c', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 20px' }}>
       <form onSubmit={handleSubmit} className="glass" style={{ padding: '40px', maxWidth: '400px', width: '100%', borderRadius: '12px' }}>
-        <h2 style={{ color: '#e10600', marginBottom: '10px', textAlign: 'center' }}>Criar Nova Senha</h2>
+        <h2 style={{ color: 'var(--accent-color, #ae0d05)', marginBottom: '10px', textAlign: 'center' }}>Criar Nova Senha</h2>
         <p style={{ color: '#aaa', marginBottom: '30px', textAlign: 'center' }}>Digite sua nova senha abaixo.</p>
         
         {status === 'error' && !senha && (

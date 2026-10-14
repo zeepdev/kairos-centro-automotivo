@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 const TvDashboard = () => {
@@ -38,9 +38,10 @@ const TvDashboard = () => {
 
   if (avisos.length === 0) {
     return (
-      <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', color: '#fff', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
-        <h1 style={{ color: '#e10600', fontFamily: 'sans-serif' }}>KADOSH AUTO CENTER</h1>
-        <p style={{ position: 'absolute', bottom: '20px', color: '#333' }}>Nenhum aviso cadastrado no momento.</p>
+      <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0C0C0C', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
+        <img src="/logo_kairos_transparent.png" alt="Kairós Centro Automotivo" style={{ maxHeight: '160px', maxWidth: '80%', objectFit: 'contain', marginBottom: '20px' }} />
+        <h1 style={{ color: 'var(--accent-color, #ae0d05)', fontFamily: "'Exo 2', sans-serif", fontStyle: 'italic', letterSpacing: '2px', fontSize: '2.2rem', margin: 0 }}>KAIRÓS CENTRO AUTOMOTIVO</h1>
+        <p style={{ position: 'absolute', bottom: '20px', color: '#666' }}>Nenhum aviso cadastrado no momento.</p>
       </div>
     );
   }

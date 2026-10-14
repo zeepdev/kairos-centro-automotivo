@@ -27,7 +27,7 @@ const Gallery = () => {
           >
             <img
               src={`/foto${num}.jpeg`}
-              alt={`Estrutura Kadosh ${num}`}
+              alt={`Estrutura Kairós ${num}`}
               style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
               onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.07)')}
               onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}

@@ -32,8 +32,7 @@ const Footer = ({ theme = 'dark' }) => {
       <div className="container footer-grid">
         <div className="footer-brand">
           <div className="nav-logo" style={{ marginBottom: '16px' }}>
-            <img src="/logo_kadosh_transparent.png" alt="Kadosh" style={{ height: '40px', borderRadius: 0 }} />
-            <span>Kadosh</span>
+            <img src="/logo_kairos_transparent.png" alt="Kairós Centro Automotivo" style={{ height: '46px', objectFit: 'contain' }} />
           </div>
           <p>Excelência em serviços automotivos com honestidade, tecnologia e compromisso com você.</p>
           <div className="footer-social">
@@ -79,7 +78,7 @@ const Footer = ({ theme = 'dark' }) => {
 
       <div className="footer-bottom container">
         <span>© {new Date().getFullYear()} {OFICINA.nome}. Todos os direitos reservados.</span>
-        <span>Desenvolvido com paixão por performance.</span>
+        <span>Developed by: <a href="https://athenagrowthmarketing.com" target="_blank" rel="noopener" style={{ color: 'var(--accent-color)', fontWeight: '600' }}>Athena Growth Marketing</a></span>
       </div>
 
       <style>{`

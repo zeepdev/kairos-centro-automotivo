@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { consultarPlaca } from '../lib/placaApi';
@@ -334,7 +334,7 @@ const RevisaoDetalhes = () => {
     },
     title: {
       fontSize: '2.8rem',
-      color: '#e10600',
+      color: '#ae0d05',
       textTransform: 'uppercase',
       margin: '0 0 10px 0',
       textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
@@ -376,7 +376,7 @@ const RevisaoDetalhes = () => {
     sectionTitle: {
       fontSize: '1.4rem',
       color: '#fff',
-      borderBottom: '2px solid #e10600',
+      borderBottom: '2px solid #ae0d05',
       paddingBottom: '10px',
       marginBottom: '20px',
       textTransform: 'uppercase',
@@ -396,7 +396,7 @@ const RevisaoDetalhes = () => {
       fontSize: '0.95rem'
     },
     checkServicos: {
-      color: '#e10600',
+      color: '#ae0d05',
       fontWeight: 'bold',
       fontSize: '1.1rem'
     },
@@ -410,7 +410,7 @@ const RevisaoDetalhes = () => {
       padding: '40px',
       backgroundColor: 'rgba(255, 255, 255, 0.01)',
       borderRadius: '20px',
-      border: '1px solid rgba(220, 39, 67, 0.2)',
+      border: '1px solid rgba(174, 13, 5, 0.25)',
       boxShadow: '0 15px 35px rgba(0, 0, 0, 0.5)',
       position: 'relative',
       overflow: 'hidden'
@@ -421,7 +421,7 @@ const RevisaoDetalhes = () => {
       left: 0,
       width: '100%',
       height: '3px',
-      background: 'linear-gradient(90deg, #e10600, #ff1a1a)'
+      background: 'linear-gradient(90deg, #ae0d05, #c91107)'
     },
     horariosGrid: {
       display: 'grid',

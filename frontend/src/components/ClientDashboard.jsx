@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { consultarPlaca } from '../lib/placaApi';
@@ -505,18 +505,18 @@ const ClientDashboard = () => {
               </div>
             )}
             <div>
-              <h1 style={{ fontSize: '2.2rem', color: '#e10600', margin: 0 }}>
+              <h1 style={{ fontSize: '2.2rem', color: 'var(--accent-color, #ae0d05)', margin: 0 }}>
                 Olá, {nomeExibicao.split(' ')[0] || 'Cliente'}! 👋
               </h1>
-              <p style={{ color: '#aaa', margin: '5px 0 0 0' }}>Bem-vindo à sua área exclusiva Kadosh Auto Center</p>
+              <p style={{ color: '#aaa', margin: '5px 0 0 0' }}>Bem-vindo à sua área exclusiva Kairós Centro Automotivo</p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             {cliente?.is_admin && (
-              <Link to="/admin" className="btn" style={{ background: '#e10600', color: '#fff', fontSize: '0.85rem' }}>Painel Admin 👑</Link>
+              <Link to="/admin" className="btn" style={{ background: 'var(--accent-color, #ae0d05)', color: '#fff', fontSize: '0.85rem' }}>Painel Admin 👑</Link>
             )}
             <Link to="/" className="btn" style={{ background: '#333', fontSize: '0.85rem' }}>Voltar ao Site</Link>
-            <button onClick={handleLogout} className="btn" style={{ background: 'transparent', border: '1px solid #e10600', color: '#e10600', fontSize: '0.85rem' }}>Sair</button>
+            <button onClick={handleLogout} className="btn" style={{ background: 'transparent', border: '1px solid var(--accent-color, #ae0d05)', color: 'var(--accent-color, #ae0d05)', fontSize: '0.85rem' }}>Sair</button>
           </div>
         </div>
 
@@ -864,7 +864,7 @@ const ClientDashboard = () => {
         <div className="glass" style={{ padding: '25px', marginBottom: '30px', borderLeft: '4px solid var(--accent-color)' }}>
           <h3 className="panel-title">⭐ Deixar um Depoimento</h3>
           <p style={{ color: 'var(--text-muted)', margin: '8px 0 20px 0', fontSize: '0.9rem' }}>
-            Sua opinião é fundamental para nós. Conte como foi sua experiência na Kadosh!
+            Sua opinião é fundamental para nós. Conte como foi sua experiência no Kairós Centro Automotivo!
           </p>
           
           <form onSubmit={async (e) => {

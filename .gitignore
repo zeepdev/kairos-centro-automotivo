@@ -1,4 +1,9 @@
 node_modules/
+frontend/node_modules/
+*node_modules_corrupted_backup*
+dist/
+frontend/dist/
 .env
 .tmp/
 .DS_Store
+

@@ -321,16 +321,16 @@ app.post('/api/send-update-email', async (req, res) => {
 
   try {
     const data = await resend.emails.send({
-      from: 'Kadosh Auto Center <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
       to: [clientEmail],
-      subject: `Atualização do seu ${carInfo} - Kadosh Auto Center`,
+      subject: `Atualização do seu ${carInfo} - Kairós Centro Automotivo`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0505; color: #fff; padding: 30px; border-radius: 8px;">
-          <h2 style="color: #dc2743; text-align: center; text-transform: uppercase;">KADOSH AUTO CENTER</h2>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0c0c0c; color: #fff; padding: 30px; border-radius: 8px;">
+          <h2 style="color: #ae0d05; text-align: center; text-transform: uppercase;">KAIRÓS CENTRO AUTOMOTIVO</h2>
           <p style="font-size: 16px;">Olá, <strong>${clientName || 'Cliente'}</strong>!</p>
           <p style="font-size: 16px;">O nosso mecânico acabou de registrar uma nova atualização sobre o seu veículo <strong>${carInfo}</strong>:</p>
           
-          <div style="background-color: #111; padding: 20px; border-left: 4px solid #dc2743; margin: 25px 0; border-radius: 4px;">
+          <div style="background-color: #111; padding: 20px; border-left: 4px solid #ae0d05; margin: 25px 0; border-radius: 4px;">
             <p style="font-size: 16px; margin: 0; color: #ddd; font-style: italic;">"${descricao}"</p>
           </div>
 
@@ -341,12 +341,12 @@ app.post('/api/send-update-email', async (req, res) => {
           ` : ''}
 
           <p style="text-align: center; margin-top: 40px;">
-            <a href="https://kadoshautocenter.com/login" style="background-color: #dc2743; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            <a href="https://kadoshautocenter.com/login" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               Acompanhar no Painel
             </a>
           </p>
           <p style="text-align: center; font-size: 12px; color: #666; margin-top: 50px;">
-            Equipe Kadosh Auto Center<br/>Goiânia, GO
+            Equipe Kairós Centro Automotivo<br/>Goiânia, GO
           </p>
         </div>
       `
@@ -384,15 +384,15 @@ app.post('/api/send-budget-notification', async (req, res) => {
 
     // 2. Enviar o e-mail via Resend
     const data = await resend.emails.send({
-      from: 'Kadosh Auto Center <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
       to: adminEmails,
       subject: `🆕 Novo Orçamento: ${nome} - ${placa}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0505; color: #fff; padding: 30px; border-radius: 8px; border: 1px solid #333;">
-          <h2 style="color: #dc2743; text-align: center; text-transform: uppercase; margin-bottom: 30px;">Novo Orçamento Recebido</h2>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0c0c0c; color: #fff; padding: 30px; border-radius: 8px; border: 1px solid #333;">
+          <h2 style="color: #ae0d05; text-align: center; text-transform: uppercase; margin-bottom: 30px;">Novo Orçamento Recebido</h2>
           
           <div style="background-color: #111; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-            <h3 style="color: #dc2743; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Dados do Cliente</h3>
+            <h3 style="color: #ae0d05; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Dados do Cliente</h3>
             <p><strong>Nome:</strong> ${nome}</p>
             <p><strong>E-mail:</strong> ${email || 'Não informado'}</p>
             <p><strong>Telefone:</strong> ${telefone || 'Não informado'}</p>
@@ -400,25 +400,25 @@ app.post('/api/send-budget-notification', async (req, res) => {
           </div>
 
           <div style="background-color: #111; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-            <h3 style="color: #dc2743; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Veículo e Serviço</h3>
-            <p><strong>Placa:</strong> <span style="background: #dc2743; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${placa}</span></p>
+            <h3 style="color: #ae0d05; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Veículo e Serviço</h3>
+            <p><strong>Placa:</strong> <span style="background: #ae0d05; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${placa}</span></p>
             <p><strong>Serviço:</strong> ${servicoDesejado}</p>
             <p><strong>Agendamento:</strong> ${dataAgendamento || 'Não solicitado'}</p>
           </div>
 
           <div style="background-color: #111; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-            <h3 style="color: #dc2743; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Descrição do Problema</h3>
+            <h3 style="color: #ae0d05; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">Descrição do Problema</h3>
             <p style="font-style: italic; color: #ddd;">"${descricao}"</p>
           </div>
 
           <p style="text-align: center; margin-top: 40px;">
-            <a href="https://kadoshautocenter.com/admin" style="background-color: #dc2743; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            <a href="https://kadoshautocenter.com/admin" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               Ver no Painel Administrativo
             </a>
           </p>
           
           <p style="text-align: center; font-size: 12px; color: #666; margin-top: 50px;">
-            Sistema de Notificações Kadosh Auto Center
+            Sistema de Notificações Kairós Centro Automotivo
           </p>
         </div>
       `
@@ -553,9 +553,9 @@ app.post('/api/send-gastos-fixos-alert', async (req, res) => {
     }).join('');
 
     const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #0d0d11; color: #fff; padding: 30px; border-radius: 12px; border: 1px solid #2a2a35;">
-        <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #dc2743; padding-bottom: 15px;">
-          <h2 style="color: #dc2743; margin: 0; text-transform: uppercase; letter-spacing: 1px;">KADOSH AUTO CENTER</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; background-color: #0c0c0c; color: #fff; padding: 30px; border-radius: 12px; border: 1px solid #2a2a35;">
+        <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #ae0d05; padding-bottom: 15px;">
+          <h2 style="color: #ae0d05; margin: 0; text-transform: uppercase; letter-spacing: 1px;">KAIRÓS CENTRO AUTOMOTIVO</h2>
           <p style="color: #aaa; margin: 5px 0 0 0; font-size: 14px;">Alerta Financeiro: Contas e Contratos a Vencer em até 7 Dias</p>
         </div>
 
@@ -583,21 +583,21 @@ app.post('/api/send-gastos-fixos-alert', async (req, res) => {
         </div>
 
         <div style="text-align: center; margin: 35px 0 20px 0;">
-          <a href="https://kadoshautocenter.com/admin" style="background-color: #dc2743; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+          <a href="https://kadoshautocenter.com/admin" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
             Abrir Gastos Fixos no Painel
           </a>
         </div>
 
         <p style="text-align: center; font-size: 12px; color: #666; margin-top: 30px; border-top: 1px solid #222; padding-top: 15px;">
-          Notificação Automática do Sistema Financeiro • Kadosh Auto Center
+          Notificação Automática do Sistema Financeiro • Kairós Centro Automotivo
         </p>
       </div>
     `;
 
     const data = await resend.emails.send({
-      from: 'Kadosh Auto Center <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
       to: adminEmails,
-      subject: `🔔 Alerta Financeiro: ${alertas.length} conta(s) a vencer nos próximos 7 dias - Kadosh`,
+      subject: `🔔 Alerta Financeiro: ${alertas.length} conta(s) a vencer nos próximos 7 dias - Kairós`,
       html: emailHtml
     });
 
@@ -724,7 +724,7 @@ app.post('/api/invoice/emit', async (req, res) => {
       serviceDescription: `${servicoDesejado ? servicoDesejado + ' — ' : ''}${descricao}`,
       value: parseFloat(valor),
       effectiveDate: today,
-      observations: `Kadosh Auto Center — Serviço: ${servicoDesejado || 'Manutenção'}`,
+      observations: `Kairós Centro Automotivo — Serviço: ${servicoDesejado || 'Manutenção'}`,
       taxes: {
         retainIss: false,
         iss: 2, // ISS padrão para serviços de manutenção (verificar com o contador)
@@ -811,7 +811,7 @@ app.post('/api/admin/create-client', async (req, res) => {
     }
 
     // 3. Criar usuário no Auth (usando Service Role para bypassar RLS e não deslogar o admin)
-    const emailFake = `${cpfLimpo}@kadosh.temp`;
+    const emailFake = `${cpfLimpo}@kairos.temp`;
     
     // Configura o client admin com a service role key
     const supabaseAdmin = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -1079,7 +1079,7 @@ app.post('/api/ai/fix-text', async (req, res) => {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
-Você é um corretor ortográfico e gramatical profissional trabalhando para uma oficina mecânica de alto padrão (Kadosh Auto Center).
+Você é um corretor ortográfico e gramatical profissional trabalhando para uma oficina mecânica de alto padrão (Kairós Centro Automotivo).
 Sua tarefa é ler o depoimento de um cliente e reescrevê-lo para que fique gramaticalmente correto (acentuação, pontuação, concordância) e soe ligeiramente mais claro e profissional, mas SEM perder a essência do que o cliente quis dizer.
 
 REGRAS:
