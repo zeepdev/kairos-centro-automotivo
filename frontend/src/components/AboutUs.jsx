@@ -14,7 +14,7 @@ const AboutUs = () => {
       <div className="container about-grid">
         <Reveal className="about-media" dir="left">
           <div className="about-frame">
-            <img src="/foto1.jpeg" alt="Estrutura do Kairós Centro Automotivo" />
+            <img src="/foto_fachada_kairos.jpg" alt="Estrutura do Kairós Centro Automotivo" />
             <span className="about-frame-glow" />
           </div>
         </Reveal>

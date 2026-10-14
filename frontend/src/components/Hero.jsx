@@ -74,7 +74,7 @@ const Hero = () => {
         {/* Foto */}
         <div className="hero-photo">
           <div className="hp-frame">
-            <img className="hp-img" src="/foto1.jpeg" alt={`Fachada da ${OFICINA.nome}`} />
+            <img className="hp-img" src="/foto_fachada_kairos.jpg" alt={`Fachada da ${OFICINA.nome}`} />
             <span className="hp-shade" />
             <span className="hp-scan" />
           </div>
