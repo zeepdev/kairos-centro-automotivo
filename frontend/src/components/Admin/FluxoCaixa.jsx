@@ -354,6 +354,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
         applyPreviousClosureBalances(hoje, hData);
       }
       syncPaidBudgets(hoje);
+      syncPaidGastosFixos(hoje);
     };
     init();
     return () => { isMounted = false; };
@@ -417,7 +418,73 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     }
   };
 
-  // Listener em tempo real para pagamentos de orçamentos (disparado pelo ConfirmPaymentModal)
+  // Sincronizar gastos fixos pagos do Supabase/Local para a data informada
+  const syncPaidGastosFixos = async (targetDate) => {
+    try {
+      let paidGastos = [];
+      const { data: dbGastos, error } = await supabase
+        .from('gastos_fixos')
+        .select('*')
+        .eq('status', 'pago');
+
+      if (!error && Array.isArray(dbGastos)) {
+        paidGastos = dbGastos;
+      } else {
+        // Fallback local
+        try {
+          const localStr = localStorage.getItem('kadosh_gastos_fixos');
+          if (localStr) {
+            const parsed = JSON.parse(localStr);
+            if (Array.isArray(parsed)) {
+              paidGastos = parsed.filter(g => g && g.status === 'pago');
+            }
+          }
+        } catch (e) {}
+      }
+
+      const matching = paidGastos.filter(g => g && g.data_pagamento === targetDate);
+      if (matching.length === 0) return;
+
+      setSaidas(currentSaidas => {
+        let updated = safeArray(currentSaidas);
+
+        matching.forEach(g => {
+          const desc = `Gasto: ${g.descricao}${g.categoria ? ` (${g.categoria})` : ''}`;
+          const exists = updated.some(s => s && s.descricao && (
+            (s.gasto_id && g.id && s.gasto_id === g.id) ||
+            s.descricao === desc ||
+            s.descricao.includes(g.descricao)
+          ));
+
+          if (!exists) {
+            const valNum = g.valor_pago_real !== undefined && g.valor_pago_real !== null
+              ? g.valor_pago_real
+              : (parseFloat(g.valor) || 0);
+
+            const newEntry = {
+              descricao: desc,
+              valor: valNum.toString(),
+              metodo: g.metodo_pagamento || 'PIX',
+              conta: g.conta_destino || 'Mercado Pago ROMANOS',
+              gasto_id: g.id
+            };
+
+            if (updated.length === 1 && !updated[0]?.descricao && !updated[0]?.valor) {
+              updated = [newEntry];
+            } else {
+              updated = [newEntry, ...updated];
+            }
+          }
+        });
+
+        return updated;
+      });
+    } catch (err) {
+      console.warn('Erro ao sincronizar gastos fixos pagos:', err);
+    }
+  };
+
+  // Listener em tempo real para pagamentos de orçamentos e gastos fixos
   useEffect(() => {
     const handleBudgetPaidEvent = (event) => {
       const detail = event.detail;
@@ -446,8 +513,64 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
       }
     };
 
+    const handleGastoFixoPaidEvent = (event) => {
+      const detail = event.detail;
+      if (!detail) return;
+
+      const pDate = detail.data_pagamento || new Date().toISOString().split('T')[0];
+      if (pDate === dataCaixa) {
+        setSaidas(current => {
+          const currentList = safeArray(current);
+          const desc = detail.descricao || 'Gasto Fixo';
+          const exists = currentList.some(s => s && s.descricao && (
+            (detail.gasto_id && s.gasto_id && s.gasto_id === detail.gasto_id) ||
+            s.descricao === desc ||
+            s.descricao.includes(desc)
+          ));
+          if (exists) return currentList;
+
+          const newEntry = {
+            descricao: desc,
+            valor: (detail.valor || 0).toString(),
+            metodo: detail.metodo || 'PIX',
+            conta: detail.conta || 'Mercado Pago ROMANOS',
+            gasto_id: detail.gasto_id
+          };
+
+          if (currentList.length === 1 && !currentList[0]?.descricao && !currentList[0]?.valor) {
+            return [newEntry];
+          }
+          return [newEntry, ...currentList];
+        });
+      }
+    };
+
+    const handleGastoFixoReopenedEvent = (event) => {
+      const detail = event.detail;
+      if (!detail) return;
+      setSaidas(current => {
+        const currentList = safeArray(current);
+        const filtered = currentList.filter(s => {
+          if (!s) return false;
+          if (detail.id && s.gasto_id === detail.id) return false;
+          if (detail.descricao && s.descricao && s.descricao.includes(detail.descricao)) return false;
+          return true;
+        });
+        if (filtered.length === 0) {
+          return [{ descricao: '', valor: '', conta: 'Caixa da Empresa' }];
+        }
+        return filtered;
+      });
+    };
+
     window.addEventListener('kadosh_budget_paid', handleBudgetPaidEvent);
-    return () => window.removeEventListener('kadosh_budget_paid', handleBudgetPaidEvent);
+    window.addEventListener('kadosh_gasto_fixo_paid', handleGastoFixoPaidEvent);
+    window.addEventListener('kadosh_gasto_fixo_reopened', handleGastoFixoReopenedEvent);
+    return () => {
+      window.removeEventListener('kadosh_budget_paid', handleBudgetPaidEvent);
+      window.removeEventListener('kadosh_gasto_fixo_paid', handleGastoFixoPaidEvent);
+      window.removeEventListener('kadosh_gasto_fixo_reopened', handleGastoFixoReopenedEvent);
+    };
   }, [dataCaixa]);
 
   // Tratar alteração na data do caixa
@@ -455,6 +578,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     setDataCaixa(newDate);
     applyPreviousClosureBalances(newDate, historico);
     syncPaidBudgets(newDate);
+    syncPaidGastosFixos(newDate);
   };
 
   const fetchHistorico = async () => {
@@ -808,8 +932,11 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
 
       if (error) throw error;
 
-      // Limpar rascunho
-      localStorage.removeItem('kadosh_fluxo_caixa_draft');
+      // Limpar rascunho apenas se for fechamento de hoje
+      const hoje = new Date().toISOString().split('T')[0];
+      if (dataCaixa === hoje) {
+        localStorage.removeItem('kadosh_fluxo_caixa_draft');
+      }
 
       // Registrar Log no Sistema
       registrarLog({
@@ -840,7 +967,10 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
       localStorage.setItem('kadosh_fluxo_caixa', JSON.stringify(updated));
       setHistorico(updated);
 
-      localStorage.removeItem('kadosh_fluxo_caixa_draft');
+      const hoje = new Date().toISOString().split('T')[0];
+      if (dataCaixa === hoje) {
+        localStorage.removeItem('kadosh_fluxo_caixa_draft');
+      }
       alert('Fechamento gravado localmente no navegador (localStorage). Para enviar o PDF para o Google Drive, clique no botão "☁️ Enviar para o Drive".');
       resetForm(updated);
     } finally {
@@ -849,7 +979,8 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
   };
 
   const resetForm = (historyList = historico) => {
-    setDataCaixa(new Date().toISOString().split('T')[0]);
+    const hoje = new Date().toISOString().split('T')[0];
+    setDataCaixa(hoje);
     
     // Herda valores do fechamento recém-gravado
     if (historyList.length > 0) {
@@ -869,6 +1000,9 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     setObservacoes('');
     setEntradas([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }]);
     setSaidas([{ descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
+
+    syncPaidBudgets(hoje);
+    syncPaidGastosFixos(hoje);
   };
 
   // Excluir registro do histórico

@@ -582,10 +582,12 @@ export default function GastosFixos() {
 
       // 2. Lançar Saída Automática no Fluxo de Caixa de Hoje com o Valor REAL Confirmado
       const novaSaida = {
-        descricao: `Gasto: ${payingGasto.descricao} (${payingGasto.categoria})`,
+        descricao: `Gasto: ${payingGasto.descricao}${payingGasto.categoria ? ` (${payingGasto.categoria})` : ''}`,
         valor: valPagoNum.toString(),
         metodo: metodoPagamento,
-        conta: contaDestino
+        conta: contaDestino,
+        gasto_id: payingGasto.id,
+        data_pagamento: hojeStr
       };
 
       try {
@@ -593,22 +595,30 @@ export default function GastosFixos() {
         let draft = draftStr ? JSON.parse(draftStr) : {};
         const saidasAtuais = draft.saidas || [{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }];
 
-        if (saidasAtuais.length === 1 && !saidasAtuais[0].descricao && !saidasAtuais[0].valor) {
-          draft.saidas = [novaSaida];
-        } else {
-          draft.saidas = [novaSaida, ...saidasAtuais];
+        // Evita duplicar se já foi adicionado
+        const jaExiste = saidasAtuais.some(s => s && s.descricao && (
+          (s.gasto_id && payingGasto.id && s.gasto_id === payingGasto.id) ||
+          s.descricao === novaSaida.descricao
+        ));
+
+        if (!jaExiste) {
+          if (saidasAtuais.length === 1 && !saidasAtuais[0].descricao && !saidasAtuais[0].valor) {
+            draft.saidas = [novaSaida];
+          } else {
+            draft.saidas = [novaSaida, ...saidasAtuais];
+          }
+
+          localStorage.setItem('kadosh_fluxo_caixa_draft', JSON.stringify(draft));
+
+          try {
+            await supabase.from('fluxo_caixa_draft').upsert([{
+              id: 'current_draft',
+              data_caixa: hojeStr,
+              saidas: draft.saidas,
+              updated_at: new Date().toISOString()
+            }]);
+          } catch (eOnline) {}
         }
-
-        localStorage.setItem('kadosh_fluxo_caixa_draft', JSON.stringify(draft));
-
-        try {
-          await supabase.from('fluxo_caixa_draft').upsert([{
-            id: 'current_draft',
-            data_caixa: hojeStr,
-            saidas: draft.saidas,
-            updated_at: new Date().toISOString()
-          }]);
-        } catch (eOnline) {}
 
         window.dispatchEvent(new CustomEvent('kadosh_gasto_fixo_paid', { detail: novaSaida }));
       } catch (errDraft) {
@@ -647,6 +657,30 @@ export default function GastosFixos() {
 
       const newList = gastos.map(g => g.id === gasto.id ? updated : g);
       saveLocalGastos(newList);
+
+      // Remover do rascunho de saídas se presente
+      try {
+        const draftStr = localStorage.getItem('kadosh_fluxo_caixa_draft');
+        if (draftStr) {
+          let draft = JSON.parse(draftStr);
+          if (Array.isArray(draft.saidas)) {
+            draft.saidas = draft.saidas.filter(s => s && s.gasto_id !== gasto.id && !s.descricao?.includes(gasto.descricao));
+            if (draft.saidas.length === 0) {
+              draft.saidas = [{ descricao: '', valor: '', conta: 'Caixa da Empresa' }];
+            }
+            localStorage.setItem('kadosh_fluxo_caixa_draft', JSON.stringify(draft));
+            try {
+              await supabase.from('fluxo_caixa_draft').upsert([{
+                id: 'current_draft',
+                saidas: draft.saidas,
+                updated_at: new Date().toISOString()
+              }]);
+            } catch (eOnline) {}
+          }
+        }
+      } catch (e) {}
+
+      window.dispatchEvent(new CustomEvent('kadosh_gasto_fixo_reopened', { detail: { id: gasto.id, descricao: gasto.descricao } }));
     }
   };
 
