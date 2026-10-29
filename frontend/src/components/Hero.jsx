@@ -74,7 +74,10 @@ const Hero = () => {
         {/* Foto */}
         <div className="hero-photo">
           <div className="hp-frame">
-            <img className="hp-img" src="/foto_fachada_kairos.jpg" alt={`Fachada da ${OFICINA.nome}`} />
+            <picture>
+              <source srcSet="/images/kairos/kairos-fachada-principal.webp" type="image/webp" />
+              <img className="hp-img" src="/images/kairos/kairos-fachada-principal.jpg" alt={`Fachada da ${OFICINA.nome}`} />
+            </picture>
             <span className="hp-shade" />
             <span className="hp-scan" />
           </div>

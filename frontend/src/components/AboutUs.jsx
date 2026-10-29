@@ -14,7 +14,10 @@ const AboutUs = () => {
       <div className="container about-grid">
         <Reveal className="about-media" dir="left">
           <div className="about-frame">
-            <img src="/foto_fachada_kairos.jpg" alt="Estrutura do Kairós Centro Automotivo" />
+            <picture>
+              <source srcSet="/images/kairos/kairos-salao-oficina.webp" type="image/webp" />
+              <img src="/images/kairos/kairos-salao-oficina.jpg" alt="Estrutura interna e Boxes do Kairós Centro Automotivo" />
+            </picture>
             <span className="about-frame-glow" />
           </div>
         </Reveal>

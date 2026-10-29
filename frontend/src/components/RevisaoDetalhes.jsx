@@ -581,7 +581,7 @@ const RevisaoDetalhes = () => {
 
             {status === 'success' && (
               <div style={{ background: 'rgba(74, 222, 128, 0.1)', border: '1px solid #4ade80', borderRadius: '8px', padding: '15px', color: '#4ade80', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold' }}>
-                ✓ Solicitação enviada com sucesso! A oficina Kadosh foi notificada e entrará em contato em breve.
+                ✓ Solicitação enviada com sucesso! A equipe Kairós foi notificada e entrará em contato em breve.
                 {user && <span style={{ display: 'block', fontSize: '0.85rem', marginTop: '5px', fontWeight: 'normal', color: '#aaa' }}>Redirecionando para seu histórico...</span>}
               </div>
             )}
