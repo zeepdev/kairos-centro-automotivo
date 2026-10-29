@@ -207,7 +207,8 @@ const RevisaoDetalhes = () => {
         recaptchaToken = await new Promise((resolve, reject) => {
           window.grecaptcha.ready(async () => {
             try {
-              const token = await window.grecaptcha.execute('6LcR5iItAAAAANu65uMHXWIlD9FX8IvGUGvZOB4F', { action: 'submit_budget' });
+              const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LdzpAYuAAAAAOJXlaATAdVHUaB-piMwp0tvRpP3';
+              const token = await window.grecaptcha.execute(siteKey, { action: 'submit_budget' });
               resolve(token);
             } catch (err) {
               reject(err);
