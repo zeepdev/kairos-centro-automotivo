@@ -6,103 +6,70 @@ const fotosKairos = [
     id: 1,
     jpg: '/images/kairos/kairos-fachada-principal.jpg',
     webp: '/images/kairos/kairos-fachada-principal.webp',
-    title: 'Fachada Principal & Showroom',
-    category: 'Estrutura',
-    desc: 'Entrada principal moderna com estacionamento e identificação Kairós.'
+    alt: 'Fachada Kairós Centro Automotivo'
   },
   {
     id: 2,
     jpg: '/images/kairos/kairos-salao-oficina.jpg',
     webp: '/images/kairos/kairos-salao-oficina.webp',
-    title: 'Salão Técnico & Boxes com LED',
-    category: 'Oficina',
-    desc: 'Boxes de atendimento equipados e iluminação técnica de alta visibilidade.'
+    alt: 'Estrutura técnica e boxes com iluminação LED'
   },
   {
     id: 3,
     jpg: '/images/kairos/kairos-diagnostico-scanner.jpg',
     webp: '/images/kairos/kairos-diagnostico-scanner.webp',
-    title: 'Diagnóstico Computadorizado',
-    category: 'Mecânica',
-    desc: 'Scanner automotivo avançado e análise eletrônica completa do motor.'
+    alt: 'Diagnóstico computadorizado e scanner'
   },
   {
     id: 4,
     jpg: '/images/kairos/kairos-mecanica-motor.jpg',
     webp: '/images/kairos/kairos-mecanica-motor.webp',
-    title: 'Precisão Mecânica & Cabeçotes',
-    category: 'Mecânica',
-    desc: 'Desmontagem, retífica e montagem precisa de motores.'
+    alt: 'Precisão mecânica e desmontagem de motor'
   },
   {
     id: 5,
     jpg: '/images/kairos/kairos-mecanico-toro.jpg',
     webp: '/images/kairos/kairos-mecanico-toro.webp',
-    title: 'Mecânica Especializada em Ação',
-    category: 'Equipe',
-    desc: 'Profissionais experientes cuidando de cada detalhe do veículo.'
+    alt: 'Manutenção especializada em veículo'
   },
   {
     id: 6,
     jpg: '/images/kairos/kairos-fachada-ampla.jpg',
     webp: '/images/kairos/kairos-fachada-ampla.webp',
-    title: 'Estrutura Completa & Pátio',
-    category: 'Estrutura',
-    desc: 'Amplo espaço projetado para receber você e seu automóvel com conforto.'
+    alt: 'Estrutura ampla e pátio'
   },
   {
     id: 7,
     jpg: '/images/kairos/kairos-patio-visao-aerea.jpg',
     webp: '/images/kairos/kairos-patio-visao-aerea.webp',
-    title: 'Visão Panorâmica da Oficina',
-    category: 'Oficina',
-    desc: 'Visão geral do espaço técnico integrado e organizado.'
+    alt: 'Visão panorâmica da oficina'
   },
   {
     id: 8,
-    jpg: '/images/kairos/kairos-boxes-servico.jpg',
-    webp: '/images/kairos/kairos-boxes-servico.webp',
-    title: 'Área Técnica e Boxes de Manutenção',
-    category: 'Oficina',
-    desc: 'Bancadas limpas, piso de alta resistência e equipamentos de ponta.'
+    jpg: '/images/kairos/kairos-revisao-frota.jpg',
+    webp: '/images/kairos/kairos-revisao-frota.webp',
+    alt: 'Revisão preventiva de veículos'
   },
   {
     id: 9,
-    jpg: '/images/kairos/kairos-revisao-frota.jpg',
-    webp: '/images/kairos/kairos-revisao-frota.webp',
-    title: 'Revisão Preventiva & Frotas',
-    category: 'Equipe',
-    desc: 'Manutenção rigorosa para veículos de passeio, SUVs e utilitários.'
-  },
-  {
-    id: 10,
     jpg: '/images/kairos/kairos-ferramental-oficina.jpg',
     webp: '/images/kairos/kairos-ferramental-oficina.webp',
-    title: 'Ferramental Avançado',
-    category: 'Estrutura',
-    desc: 'Carros de ferramentas profissionais e instrumentação precisa.'
+    alt: 'Ferramental e bancada profissional'
   }
 ];
 
-const categorias = ['Todas', 'Estrutura', 'Oficina', 'Mecânica', 'Equipe'];
-
 const Gallery = () => {
-  const [categoriaAtiva, setCategoriaAtiva] = useState('Todas');
   const [lightboxIndex, setLightboxIndex] = useState(null);
-
-  const fotosFiltradas = categoriaAtiva === 'Todas'
-    ? fotosKairos
-    : fotosKairos.filter((f) => f.category === categoriaAtiva);
 
   const handlePrev = useCallback(() => {
     if (lightboxIndex === null) return;
-    setLightboxIndex((prev) => (prev > 0 ? prev - 1 : fotosFiltradas.length - 1));
-  }, [lightboxIndex, fotosFiltradas.length]);
+    setLightboxIndex((prev) => (prev > 0 ? prev - 1 : fotosKairos.length - 1));
+  }, [lightboxIndex]);
 
   const handleNext = useCallback(() => {
     if (lightboxIndex === null) return;
-    setLightboxIndex((prev) => (prev < fotosFiltradas.length - 1 ? prev + 1 : 0));
-  }, [lightboxIndex, fotosFiltradas.length]);
+    setLightboxIndex((prev) => (prev < fotosKairos.length - 1 ? prev + 1 : 0));
+  }, [lightboxIndex]);
 
   const handleClose = useCallback(() => {
     setLightboxIndex(null);
@@ -122,55 +89,23 @@ const Gallery = () => {
 
   return (
     <section id="estrutura" className="container" style={{ paddingTop: '80px', paddingBottom: '90px' }}>
-      <Reveal style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <span className="eyebrow" style={{ justifyContent: 'center' }}>Nossa Estrutura Real</span>
+      <Reveal style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <span className="eyebrow" style={{ justifyContent: 'center' }}>Nossa Estrutura</span>
         <h2 className="section-title">Cuidado de perto<br />com o seu veículo</h2>
         <p style={{ color: 'var(--text-muted)', marginTop: '12px', maxWidth: '640px', marginInline: 'auto' }}>
-          Conheça o espaço físico, ferramental tecnológico e a equipe que cuidam do seu carro no Kairós Centro Automotivo.
+          Conheça nosso espaço e o cuidado com cada detalhe do seu carro.
         </p>
-
-        {/* Filtros de categoria */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          justifyContent: 'center',
-          marginTop: '28px'
-        }}>
-          {categorias.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
-                setCategoriaAtiva(cat);
-                setLightboxIndex(null);
-              }}
-              style={{
-                background: categoriaAtiva === cat ? 'var(--accent-color)' : 'rgba(255,255,255,0.04)',
-                color: categoriaAtiva === cat ? '#fff' : 'var(--text-muted)',
-                border: '1px solid ' + (categoriaAtiva === cat ? 'var(--accent-color)' : 'var(--hairline)'),
-                padding: '7px 16px',
-                borderRadius: '999px',
-                fontSize: '0.86rem',
-                fontWeight: categoriaAtiva === cat ? '600' : '400',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease'
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
       </Reveal>
 
-      {/* Grid de fotos */}
+      {/* Grid limpo sem legendas cobrindo as fotos */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
         gap: '20px',
         maxWidth: '1200px',
         margin: '0 auto',
       }}>
-        {fotosFiltradas.map((foto, idx) => (
+        {fotosKairos.map((foto, idx) => (
           <Reveal
             key={foto.id}
             delay={(idx % 6) * 70}
@@ -194,7 +129,7 @@ const Gallery = () => {
                 <source srcSet={foto.webp} type="image/webp" />
                 <img
                   src={foto.jpg}
-                  alt={foto.title}
+                  alt={foto.alt}
                   loading="lazy"
                   style={{
                     width: '100%',
@@ -206,63 +141,21 @@ const Gallery = () => {
                   className="gallery-thumb"
                 />
               </picture>
-
-              {/* Overlay com gradiente e informações */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'flex-end',
-                  padding: '20px',
-                  transition: 'opacity 0.3s ease',
-                  opacity: 0.95
-                }}
-              >
-                <span style={{
-                  alignSelf: 'flex-start',
-                  fontSize: '0.72rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  fontWeight: '700',
-                  color: 'var(--accent-color)',
-                  background: 'rgba(229,46,46,0.12)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  marginBottom: '8px',
-                  border: '1px solid rgba(229,46,46,0.3)'
-                }}>
-                  {foto.category}
-                </span>
-                <h4 style={{ color: '#fff', fontSize: '1rem', fontWeight: '600', margin: 0 }}>
-                  {foto.title}
-                </h4>
-                <p style={{
-                  color: 'rgba(255,255,255,0.7)',
-                  fontSize: '0.8rem',
-                  margin: '6px 0 0 0',
-                  lineHeight: '1.3'
-                }}>
-                  {foto.desc}
-                </p>
-              </div>
             </div>
           </Reveal>
         ))}
       </div>
 
-      {/* Lightbox Modal */}
-      {lightboxIndex !== null && fotosFiltradas[lightboxIndex] && (
+      {/* Lightbox Modal Minimalista */}
+      {lightboxIndex !== null && fotosKairos[lightboxIndex] && (
         <div
           onClick={handleClose}
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            backgroundColor: 'rgba(0, 0, 0, 0.92)',
-            backdropFilter: 'blur(8px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.94)',
+            backdropFilter: 'blur(10px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -272,14 +165,15 @@ const Gallery = () => {
           {/* Botão Fechar */}
           <button
             onClick={handleClose}
+            aria-label="Fechar"
             style={{
               position: 'absolute',
               top: '24px',
               right: '24px',
-              background: 'rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.12)',
               border: 'none',
               color: '#fff',
-              fontSize: '28px',
+              fontSize: '26px',
               width: '44px',
               height: '44px',
               borderRadius: '50%',
@@ -300,10 +194,11 @@ const Gallery = () => {
               e.stopPropagation();
               handlePrev();
             }}
+            aria-label="Anterior"
             style={{
               position: 'absolute',
               left: '20px',
-              background: 'rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.12)',
               border: 'none',
               color: '#fff',
               fontSize: '26px',
@@ -321,44 +216,35 @@ const Gallery = () => {
             ‹
           </button>
 
-          {/* Conteúdo Imagem */}
+          {/* Foto em tela cheia */}
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              maxWidth: '90vw',
-              maxHeight: '85vh',
+              maxWidth: '92vw',
+              maxHeight: '90vh',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center'
             }}
           >
             <picture>
-              <source srcSet={fotosFiltradas[lightboxIndex].webp} type="image/webp" />
+              <source srcSet={fotosKairos[lightboxIndex].webp} type="image/webp" />
               <img
-                src={fotosFiltradas[lightboxIndex].jpg}
-                alt={fotosFiltradas[lightboxIndex].title}
+                src={fotosKairos[lightboxIndex].jpg}
+                alt={fotosKairos[lightboxIndex].alt}
                 style={{
                   maxWidth: '100%',
-                  maxHeight: '75vh',
+                  maxHeight: '86vh',
                   objectFit: 'contain',
                   borderRadius: '12px',
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.85)',
                   border: '1px solid rgba(255,255,255,0.1)'
                 }}
               />
             </picture>
-
-            <div style={{ textAlign: 'center', marginTop: '16px' }}>
-              <h3 style={{ color: '#fff', fontSize: '1.2rem', margin: 0, fontWeight: '600' }}>
-                {fotosFiltradas[lightboxIndex].title}
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '6px' }}>
-                {fotosFiltradas[lightboxIndex].desc}
-              </p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
-                {lightboxIndex + 1} de {fotosFiltradas.length}
-              </span>
-            </div>
+            <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', marginTop: '12px' }}>
+              {lightboxIndex + 1} / {fotosKairos.length}
+            </span>
           </div>
 
           {/* Botão Próximo */}
@@ -367,10 +253,11 @@ const Gallery = () => {
               e.stopPropagation();
               handleNext();
             }}
+            aria-label="Próximo"
             style={{
               position: 'absolute',
               right: '20px',
-              background: 'rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.12)',
               border: 'none',
               color: '#fff',
               fontSize: '26px',
@@ -392,7 +279,7 @@ const Gallery = () => {
 
       <style>{`
         .gallery-item-wrapper:hover .gallery-thumb {
-          transform: scale(1.06);
+          transform: scale(1.05);
         }
       `}</style>
     </section>
