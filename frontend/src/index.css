@@ -61,7 +61,7 @@ body::before {
 h1, h2, h3, h4 {
   font-family: 'Exo 2', 'Archivo', sans-serif;
   font-weight: 800;
-  font-style: italic;
+  font-style: normal;
   letter-spacing: -0.01em;
   line-height: 1.05;
 }
@@ -294,6 +294,7 @@ section {
 .hero h1 {
   font-family: 'Anton', sans-serif;
   font-weight: 400;
+  font-style: normal;
   font-size: clamp(2.6rem, 7vw, 5rem);
   line-height: 1.12;
   letter-spacing: 0.5px;

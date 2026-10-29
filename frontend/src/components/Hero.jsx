@@ -110,7 +110,7 @@ const Hero = () => {
           gap: 48px;
           width: 100%;
         }
-        .hero-text h1 { margin-bottom: 22px; }
+        .hero-text h1 { margin-bottom: 22px; font-style: normal; }
         .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
         .hero-sublinks { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--text-muted); font-size: 0.9rem; }
         .hero-sublinks button, .hero-sublinks a { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: color .2s; }
