@@ -11,6 +11,7 @@ import EditBudgetModal from './EditBudgetModal';
 import MecanicosManager from './MecanicosManager';
 import FluxoCaixa from './FluxoCaixa';
 import GastosFixos from './GastosFixos';
+import DREManager from './DREManager';
 import ErrorBoundary from '../ErrorBoundary';
 import { supabase } from '../../lib/supabase';
 import { calcularPrioridade, PRIORIDADES } from '../../lib/prioridade';
@@ -672,6 +673,16 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
             📌 Gastos Fixos & Recorrentes
           </button>
           <button 
+            onClick={() => setActiveTab('dre')}
+            style={{ 
+              padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none',
+              background: activeTab === 'dre' ? '#0ea5e9' : '#222',
+              color: '#fff', fontWeight: 'bold'
+            }}
+          >
+            📊 DRE — Demonstrativo
+          </button>
+          <button 
             onClick={() => setActiveTab('mecanicos')}
             style={{ 
               padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none',
@@ -896,6 +907,13 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
         {activeTab === 'gastos_fixos' && (
           <ErrorBoundary moduleName="Gastos Fixos">
             <GastosFixos />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'dre' && (
+          <ErrorBoundary moduleName="DRE — Demonstrativo">
+            <div className="glass" style={{ padding: '30px', marginBottom: '30px' }}>
+              <DREManager />
+            </div>
           </ErrorBoundary>
         )}
         {activeTab === 'mecanicos' && (
