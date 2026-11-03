@@ -295,7 +295,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
   const [fundoReservaAnterior, setFundoReservaAnterior] = useState('0');
 
   // Listas de lançamentos
-  const [entradas, setEntradas] = useState([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }]);
+  const [entradas, setEntradas] = useState([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
   const [saidas, setSaidas] = useState([{ descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
 
   // Valores Finais Declarados (Fim do Dia)
@@ -400,7 +400,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
               descricao: desc,
               valor: (parseFloat(b.valor_total) || 0).toString(),
               metodo: b.metodo_pagamento || 'PIX',
-              conta: b.conta_destino || 'Mercado Pago KADOSH'
+              conta: b.conta_destino || 'Mercado Pago KAIRÓS'
             };
 
             if (updated.length === 1 && !updated[0]?.descricao && !updated[0]?.valor) {
@@ -502,7 +502,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
             descricao: desc,
             valor: (detail.valor || 0).toString(),
             metodo: detail.metodo || 'PIX',
-            conta: detail.conta || 'Mercado Pago KADOSH'
+            conta: detail.conta || 'Mercado Pago KAIRÓS'
           };
 
           if (currentList.length === 1 && !currentList[0]?.descricao && !currentList[0]?.valor) {
@@ -740,7 +740,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     .reduce((acc, item) => acc + (parseFloat(item?.valor) || 0), 0);
 
   const inflowReserva = safeEntradasList
-    .filter(item => item && item.conta === 'Mercado Pago KADOSH')
+    .filter(item => item && (item.conta === 'Mercado Pago KAIRÓS' || item.conta === 'Mercado Pago KADOSH'))
     .reduce((acc, item) => acc + (parseFloat(item?.valor) || 0), 0);
 
   const outflowFundoCaixa = safeSaidasList
@@ -752,7 +752,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     .reduce((acc, item) => acc + (parseFloat(item?.valor) || 0), 0);
 
   const outflowReserva = safeSaidasList
-    .filter(item => item && item.conta === 'Mercado Pago KADOSH')
+    .filter(item => item && (item.conta === 'Mercado Pago KAIRÓS' || item.conta === 'Mercado Pago KADOSH'))
     .reduce((acc, item) => acc + (parseFloat(item?.valor) || 0), 0);
 
   // Valores Esperados (Anterior + Entrada - Saída)
@@ -783,7 +783,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
 
   // Funções para manipular a lista de entradas
   const handleAddEntrada = () => {
-    setEntradas([...entradas, { descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }]);
+    setEntradas([...entradas, { descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
   };
 
   const handleRemoveEntrada = (index) => {
@@ -798,7 +798,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     if (field === 'metodo' && value === 'Dinheiro') {
       list[index].conta = 'Caixa da Empresa';
     } else if (field === 'metodo' && list[index].conta === 'Caixa da Empresa' && value !== 'Dinheiro') {
-      list[index].conta = 'Mercado Pago KADOSH';
+      list[index].conta = 'Mercado Pago KAIRÓS';
     }
     setEntradas(list);
   };
@@ -843,7 +843,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
 
     // Resetar campos
     setDataCaixa(new Date().toISOString().split('T')[0]);
-    setEntradas([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }]);
+    setEntradas([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
     setSaidas([{ descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
     setFundoCaixaFinal('');
     setDinheiroEmpresaFinal('');
@@ -998,7 +998,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     setDinheiroEmpresaFinal('');
     setFundoReservaFinal('');
     setObservacoes('');
-    setEntradas([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }]);
+    setEntradas([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
     setSaidas([{ descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
 
     syncPaidBudgets(hoje);
@@ -1048,7 +1048,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Fechamento_Caixa_Kadosh_${closingData.data}.pdf`;
+      link.download = `Fechamento_Caixa_Kairos_${closingData.data}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1109,7 +1109,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
             // Separar por canal/conta
             if (ent.conta === 'Dinheiro') monthsData[mIdx].totalDinheiro += val;
             else if (ent.conta === 'PIX') monthsData[mIdx].totalPIX += val;
-            else if (ent.conta === 'Mercado Pago KADOSH') monthsData[mIdx].totalMPKadosh += val;
+            else if ((ent.conta === 'Mercado Pago KAIRÓS' || ent.conta === 'Mercado Pago KADOSH')) monthsData[mIdx].totalMPKadosh += val;
             else if (ent.conta === 'Mercado Pago ROMANOS') monthsData[mIdx].totalMPRomanos += val;
             else monthsData[mIdx].totalOutros += val;
           });
@@ -1303,7 +1303,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Extrato_Lancamentos_Kadosh_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `Extrato_Lancamentos_Kairos_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1416,7 +1416,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                     />
                   </div>
                   <div className="form-group">
-                    <label style={{ color: '#999', fontSize: '0.75rem' }}>Fundo de Reserva (Kadosh)</label>
+                    <label style={{ color: '#999', fontSize: '0.75rem' }}>Fundo de Reserva (Kairós)</label>
                     <input 
                       type="number" step="0.01" value={fundoReservaAnterior} 
                       onChange={(e) => setFundoReservaAnterior(e.target.value)}
@@ -1467,7 +1467,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                       disabled={item.metodo === 'Dinheiro'}
                       style={{ width: '100%', padding: '8px', background: item.metodo === 'Dinheiro' ? '#222' : '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: item.metodo === 'Dinheiro' ? '#888' : '#fff' }}
                     >
-                      <option value="Mercado Pago KADOSH">Mercado Pago KADOSH</option>
+                      <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS</option>
                       <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS</option>
                       <option value="Caixa da Empresa">Caixa da Empresa</option>
                     </select>
@@ -1514,7 +1514,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                       value={item.conta} onChange={(e) => handleSaidaChange(index, 'conta', e.target.value)}
                       style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}
                     >
-                      <option value="Mercado Pago KADOSH">Mercado Pago KADOSH</option>
+                      <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS</option>
                       <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS</option>
                       <option value="Caixa da Empresa">Caixa da Empresa</option>
                     </select>
@@ -1565,7 +1565,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                     <span style={{ fontSize: '0.72rem', color: '#777' }}>Esperado: {formatCurrency(expDinheiroEmpresa)}</span>
                   </div>
                   <div className="form-group">
-                    <label style={{ color: '#aaa', fontSize: '0.78rem' }}>Fundo de Reserva (Kadosh)</label>
+                    <label style={{ color: '#aaa', fontSize: '0.78rem' }}>Fundo de Reserva (Kairós)</label>
                     <input 
                       type="number" step="0.01" placeholder={expFundoReserva.toFixed(2)} value={fundoReservaFinal} 
                       onChange={(e) => setFundoReservaFinal(e.target.value)}
@@ -2204,7 +2204,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                 style={{ padding: '7px 12px', background: '#181820', border: '1px solid #2a2a35', borderRadius: '6px', color: '#fff', fontSize: '0.8rem', fontWeight: 'bold' }}
               >
                 <option value="todas">🏦 Todas as Contas</option>
-                <option value="Mercado Pago KADOSH">Mercado Pago KADOSH</option>
+                <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS</option>
                 <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS</option>
                 <option value="Caixa da Empresa">Caixa da Empresa</option>
               </select>

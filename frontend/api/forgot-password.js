@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, error: 'Serviço de e-mail não configurado completamente no servidor.' });
   }
 
-  const targetOrigin = origin || 'https://kadoshautocenter.com';
+  const targetOrigin = origin || 'https://www.kairoscentroautomotivo.com';
   const redirectTo = `${targetOrigin}/reset-password`;
 
   try {
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
 
     // 2. Dispara e-mail profissional via Resend com a identidade Kairós
     const emailResult = await resend.emails.send({
-      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kairoscentroautomotivo.com>',
       to: [email.trim().toLowerCase()],
       subject: 'Recuperação de Senha - Kairós Centro Automotivo',
       html: `

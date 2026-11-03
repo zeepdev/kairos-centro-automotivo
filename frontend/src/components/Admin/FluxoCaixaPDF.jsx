@@ -246,11 +246,11 @@ export const FluxoCaixaPDF = ({ data }) => {
   // Cálculos de movimentações por conta (ajustado para Mercado Pago ROMANOS, Mercado Pago KADOSH e Caixa da Empresa)
   const inflowsFundoCaixa = entradasList.filter(item => item.conta === 'Mercado Pago ROMANOS').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
   const inflowsDinheiro = entradasList.filter(item => item.conta === 'Caixa da Empresa').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
-  const inflowsFundoReserva = entradasList.filter(item => item.conta === 'Mercado Pago KADOSH').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
+  const inflowsFundoReserva = entradasList.filter(item => item.conta === 'Mercado Pago KAIRÓS' || item.conta === 'Mercado Pago KADOSH').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
 
   const outflowsFundoCaixa = saidasList.filter(item => item.conta === 'Mercado Pago ROMANOS').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
   const outflowsDinheiro = saidasList.filter(item => item.conta === 'Caixa da Empresa').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
-  const outflowsFundoReserva = saidasList.filter(item => item.conta === 'Mercado Pago KADOSH').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
+  const outflowsFundoReserva = saidasList.filter(item => item.conta === 'Mercado Pago KAIRÓS' || item.conta === 'Mercado Pago KADOSH').reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
 
   const movFundoCaixa = inflowsFundoCaixa - outflowsFundoCaixa;
   const movDinheiroEmpresa = inflowsDinheiro - outflowsDinheiro;
@@ -376,7 +376,7 @@ export const FluxoCaixaPDF = ({ data }) => {
           </View>
 
           <View style={styles.tableRow}>
-            <Text style={{ flex: 1.6 }}>Fundo de Reserva (Kadosh/Bancos)</Text>
+            <Text style={{ flex: 1.6 }}>Fundo de Reserva (Kairós/Bancos)</Text>
             <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(fundoReservaAnterior)}</Text>
             <Text style={{ flex: 1, textAlign: 'right' }}>{movFundoReserva >= 0 ? `+${formatCurrency(movFundoReserva)}` : `-${formatCurrency(Math.abs(movFundoReserva))}`}</Text>
             <Text style={{ flex: 1, textAlign: 'right' }}>{formatCurrency(fundoReservaAnterior + movFundoReserva)}</Text>

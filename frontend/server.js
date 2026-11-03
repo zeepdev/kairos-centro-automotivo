@@ -321,7 +321,7 @@ app.post('/api/send-update-email', async (req, res) => {
 
   try {
     const data = await resend.emails.send({
-      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kairoscentroautomotivo.com>',
       to: [clientEmail],
       subject: `Atualização do seu ${carInfo} - Kairós Centro Automotivo`,
       html: `
@@ -341,7 +341,7 @@ app.post('/api/send-update-email', async (req, res) => {
           ` : ''}
 
           <p style="text-align: center; margin-top: 40px;">
-            <a href="https://kadoshautocenter.com/login" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            <a href="https://www.kairoscentroautomotivo.com/login" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               Acompanhar no Painel
             </a>
           </p>
@@ -368,7 +368,7 @@ app.post('/api/forgot-password', async (req, res) => {
     return res.status(400).json({ success: false, error: 'E-mail não fornecido.' });
   }
 
-  const targetOrigin = origin || 'https://kadoshautocenter.com';
+  const targetOrigin = origin || 'https://www.kairoscentroautomotivo.com';
   const redirectTo = `${targetOrigin}/reset-password`;
 
   try {
@@ -389,7 +389,7 @@ app.post('/api/forgot-password', async (req, res) => {
     }
 
     const emailResult = await resend.emails.send({
-      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kairoscentroautomotivo.com>',
       to: [email.trim().toLowerCase()],
       subject: 'Recuperação de Senha - Kairós Centro Automotivo',
       html: `
@@ -454,17 +454,20 @@ app.post('/api/send-budget-notification', async (req, res) => {
       .eq('is_admin', true);
     if (adminError) throw adminError;
     let adminEmails = admins?.map(a => a.email).filter(e => !!e) || [];
+    if (!adminEmails.includes('centroautomotivokairos09@gmail.com')) {
+      adminEmails.unshift('centroautomotivokairos09@gmail.com');
+    }
 
     // Fallback caso não encontre nenhum admin por algum motivo
     if (adminEmails.length === 0) {
-      adminEmails = ['isaqueduarte07@gmail.com'];
+      adminEmails = ['centroautomotivokairos09@gmail.com', 'isaqueduarte07@gmail.com'];
     }
 
     console.log(`📧 Enviando notificação para: ${adminEmails.join(', ')}`);
 
     // 2. Enviar o e-mail via Resend
     const data = await resend.emails.send({
-      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kairoscentroautomotivo.com>',
       to: adminEmails,
       subject: `🆕 Novo Orçamento: ${nome} - ${placa}`,
       html: `
@@ -492,7 +495,7 @@ app.post('/api/send-budget-notification', async (req, res) => {
           </div>
 
           <p style="text-align: center; margin-top: 40px;">
-            <a href="https://kadoshautocenter.com/admin" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            <a href="https://www.kairoscentroautomotivo.com/admin" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               Ver no Painel Administrativo
             </a>
           </p>
@@ -597,8 +600,11 @@ app.post('/api/send-gastos-fixos-alert', async (req, res) => {
       .eq('is_admin', true);
     
     let adminEmails = admins?.map(a => a.email).filter(e => !!e) || [];
+    if (!adminEmails.includes('centroautomotivokairos09@gmail.com')) {
+      adminEmails.unshift('centroautomotivokairos09@gmail.com');
+    }
     if (adminEmails.length === 0) {
-      adminEmails = ['isaqueduarte07@gmail.com'];
+      adminEmails = ['centroautomotivokairos09@gmail.com', 'isaqueduarte07@gmail.com'];
     }
 
     console.log(`📧 Enviando alerta de ${alertas.length} gasto(s) a vencer para: ${adminEmails.join(', ')}`);
@@ -663,7 +669,7 @@ app.post('/api/send-gastos-fixos-alert', async (req, res) => {
         </div>
 
         <div style="text-align: center; margin: 35px 0 20px 0;">
-          <a href="https://kadoshautocenter.com/admin" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+          <a href="https://www.kairoscentroautomotivo.com/admin" style="background-color: #ae0d05; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
             Abrir Gastos Fixos no Painel
           </a>
         </div>
@@ -675,7 +681,7 @@ app.post('/api/send-gastos-fixos-alert', async (req, res) => {
     `;
 
     const data = await resend.emails.send({
-      from: 'Kairós Centro Automotivo <contato@kadoshautocenter.com>',
+      from: 'Kairós Centro Automotivo <contato@kairoscentroautomotivo.com>',
       to: adminEmails,
       subject: `🔔 Alerta Financeiro: ${alertas.length} conta(s) a vencer nos próximos 7 dias - Kairós`,
       html: emailHtml

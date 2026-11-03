@@ -114,7 +114,7 @@ export default function GastosFixos() {
   const [payingValorReal, setPayingValorReal] = useState('');
   const [updateDefaultEstimate, setUpdateDefaultEstimate] = useState(false);
   const [metodoPagamento, setMetodoPagamento] = useState('PIX');
-  const [contaDestino, setContaDestino] = useState('Mercado Pago KADOSH');
+  const [contaDestino, setContaDestino] = useState('Mercado Pago KAIRÓS');
 
   // Estado de envio de alerta de e-mail
   const [sendingAlert, setSendingAlert] = useState(false);
@@ -593,7 +593,7 @@ export default function GastosFixos() {
       try {
         const draftStr = localStorage.getItem('kadosh_fluxo_caixa_draft');
         let draft = draftStr ? JSON.parse(draftStr) : {};
-        const saidasAtuais = draft.saidas || [{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }];
+        const saidasAtuais = draft.saidas || [{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }];
 
         // Evita duplicar se já foi adicionado
         const jaExiste = saidasAtuais.some(s => s && s.descricao && (
@@ -1404,7 +1404,7 @@ export default function GastosFixos() {
                                                   Pago em: {formatDate(child.data_pagamento || hojeStr)}
                                                 </span>
                                                 <span>
-                                                  {child.metodo_pagamento || 'PIX'} • {child.conta_destino || 'KADOSH'}
+                                                  {child.metodo_pagamento || 'PIX'} • {child.conta_destino || 'KAIRÓS'}
                                                 </span>
                                               </div>
                                             ) : (
@@ -1919,7 +1919,7 @@ export default function GastosFixos() {
                 <div>
                   <label style={{ fontSize: '0.8rem', color: '#aaa' }}>Conta de Saída</label>
                   <select value={contaDestino} onChange={e => setContaDestino(e.target.value)} style={inputStyle}>
-                    <option value="Mercado Pago KADOSH">Mercado Pago KADOSH (Reserva)</option>
+                    <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS (Reserva)</option>
                     <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS (Fundo de Caixa)</option>
                     <option value="Caixa da Empresa">Caixa da Empresa (Cofre/Espécie)</option>
                   </select>

@@ -26,7 +26,7 @@ const ConfirmPaymentModal = ({ atendimento, onClose, onPaymentConfirmed, isQuita
   const [valorEntradaInput, setValorEntradaInput] = useState('1000');
 
   const [metodoPagamento, setMetodoPagamento] = useState('PIX');
-  const [contaDestino, setContaDestino] = useState('Mercado Pago KADOSH');
+  const [contaDestino, setContaDestino] = useState('Mercado Pago KAIRÓS');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState('');
 
@@ -44,7 +44,7 @@ const ConfirmPaymentModal = ({ atendimento, onClose, onPaymentConfirmed, isQuita
     if (val === 'Dinheiro') {
       setContaDestino('Caixa da Empresa');
     } else if (contaDestino === 'Caixa da Empresa' && val !== 'Dinheiro') {
-      setContaDestino('Mercado Pago KADOSH');
+      setContaDestino('Mercado Pago KAIRÓS');
     }
   };
 
@@ -155,7 +155,7 @@ const ConfirmPaymentModal = ({ atendimento, onClose, onPaymentConfirmed, isQuita
       try {
         const draftStr = localStorage.getItem('kadosh_fluxo_caixa_draft');
         let draft = draftStr ? JSON.parse(draftStr) : {};
-        const entradasAtuais = draft.entradas || [{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KADOSH' }];
+        const entradasAtuais = draft.entradas || [{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }];
         
         if (entradasAtuais.length === 1 && !entradasAtuais[0].descricao && !entradasAtuais[0].valor) {
           draft.entradas = [novaEntrada];
@@ -337,7 +337,7 @@ const ConfirmPaymentModal = ({ atendimento, onClose, onPaymentConfirmed, isQuita
                 disabled={metodoPagamento === 'Dinheiro'}
                 style={{ width: '100%', padding: '10px', background: metodoPagamento === 'Dinheiro' ? '#222' : '#0a0a0c', border: '1px solid #333', borderRadius: '8px', color: metodoPagamento === 'Dinheiro' ? '#888' : '#fff', marginTop: '4px' }}
               >
-                <option value="Mercado Pago KADOSH">Mercado Pago KADOSH (Reserva)</option>
+                <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS (Reserva)</option>
                 <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS (Fundo de Caixa)</option>
                 <option value="Caixa da Empresa">Caixa da Empresa (Cofre/Espécie)</option>
               </select>

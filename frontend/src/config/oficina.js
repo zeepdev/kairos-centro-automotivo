@@ -7,9 +7,11 @@ export const OFICINA = {
   endereco: 'Av. Goiás, Qd 43 - Lt 18 Nº 6144 - St. Urias Magalhães, Goiânia - GO, 74565-250',
   telefone: '(62) 8152-9741',
   whatsapp: '556281529741',
-  email: 'kadoshautocenter7@gmail.com',
-  instagram: 'https://www.instagram.com/kadosh.center/',
-  tiktok: 'https://www.tiktok.com/@kadosh.auto.center',
+  email: 'centroautomotivokairos09@gmail.com',
+  emailNotificacoes: 'centroautomotivokairos09@gmail.com',
+  instagram: 'https://www.instagram.com/kairos.aumotivo/',
+  instagramHandle: '@kairos.aumotivo',
+  siteUrl: 'https://www.kairoscentroautomotivo.com',
   garantiaServicos: '90 dias para serviços prestados. Peças conforme garantia do fabricante.',
   validadeOrcamento: 15
 };

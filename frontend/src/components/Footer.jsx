@@ -71,7 +71,7 @@ const Footer = ({ theme = 'dark' }) => {
             <span className="fc-ico">📞</span><span>{OFICINA.telefone}</span>
           </a>
           <a href={OFICINA.instagram} target="_blank" rel="noreferrer">
-            <span className="fc-ico">📷</span><span>@kadosh.center</span>
+            <span className="fc-ico">📷</span><span>{OFICINA.instagramHandle || "@kairos.aumotivo"}</span>
           </a>
         </div>
       </div>

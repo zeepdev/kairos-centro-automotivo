@@ -79,7 +79,7 @@ export default function EditBudgetModal({ atendimento, onClose, onSaveSuccess })
   const [status, setStatus] = useState(atendimento?.status || 'Pendente');
   const [pago, setPago] = useState(atendimento?.pago || false);
   const [metodoPagamento, setMetodoPagamento] = useState(atendimento?.metodo_pagamento || 'PIX');
-  const [contaDestino, setContaDestino] = useState(atendimento?.conta_destino || 'Mercado Pago KADOSH');
+  const [contaDestino, setContaDestino] = useState(atendimento?.conta_destino || 'Mercado Pago KAIRÓS');
 
   const [saving, setSaving] = useState(false);
 
@@ -539,7 +539,7 @@ export default function EditBudgetModal({ atendimento, onClose, onSaveSuccess })
               <div>
                 <label style={{ fontSize: '0.8rem', color: '#aaa' }}>Conta de Destino</label>
                 <select value={contaDestino} onChange={e => setContaDestino(e.target.value)} style={inputStyle}>
-                  <option value="Mercado Pago KADOSH">Mercado Pago KADOSH (Reserva)</option>
+                  <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS (Reserva)</option>
                   <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS (Fundo de Caixa)</option>
                   <option value="Caixa da Empresa">Caixa da Empresa (Cofre/Espécie)</option>
                 </select>
