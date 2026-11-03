@@ -9,14 +9,37 @@ const ResetPassword = () => {
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
 
-  // Verifica se o usuário tem uma sessão válida (o Supabase cria uma sessão temporária ao clicar no link do e-mail)
+  // Verifica se o usuário tem uma sessão válida vinda do link de e-mail
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED'))) {
+        setStatus('idle');
+        setMessage('');
+      }
+    });
+
+    const hash = window.location.hash || '';
+    if (hash.includes('error=')) {
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const errorDesc = params.get('error_description') || 'Link inválido ou expirado.';
+      setMessage(`❌ ${decodeURIComponent(errorDesc.replace(/\+/g, ' '))}. Por favor, solicite a recuperação novamente.`);
+      setStatus('error');
+      return () => subscription.unsubscribe();
+    }
+
+    const timer = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const hasHashToken = hash.includes('access_token');
+      if (!session && !hasHashToken) {
         setMessage('❌ Link inválido ou expirado. Por favor, solicite a recuperação de senha novamente.');
         setStatus('error');
       }
-    });
+    }, 600);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleSubmit = async (e) => {
@@ -64,6 +87,7 @@ const ResetPassword = () => {
             onChange={e => setSenha(e.target.value)} 
             disabled={status === 'success' || (status === 'error' && !senha)} 
             minLength="6"
+            placeholder="Mínimo 6 caracteres"
           />
         </div>
 
@@ -74,7 +98,7 @@ const ResetPassword = () => {
         )}
         
         <button 
-          type="submit" 
+            type="submit" 
           className="btn" 
           style={{ width: '100%' }} 
           disabled={status === 'loading' || status === 'success' || (status === 'error' && !senha)}

@@ -14,6 +14,30 @@ const ForgotPassword = () => {
     setMessage('');
 
     try {
+      // 1. Tenta enviar via endpoint dedicado da Kairós (Resend + link com redirect correto)
+      try {
+        const response = await fetch('/api/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            origin: window.location.origin
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setStatus('success');
+            setMessage('✅ Verifique sua caixa de e-mail! Enviamos um link da Kairós para você redefinir sua senha.');
+            return;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('⚠️ Falha ao chamar /api/forgot-password, tentando fallback direto pelo Supabase...', apiErr);
+      }
+
+      // 2. Fallback direto via Supabase Auth caso o endpoint customizado não responda
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
