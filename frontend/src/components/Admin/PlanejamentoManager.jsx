@@ -20,7 +20,7 @@ export const PlanejamentoManager = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const [activeSubTab, setActiveSubTab] = useState('metas'); // 'metas' | 'orcamento' | 'cenarios' | 'simulador'
+  const [activeSubTab, setActiveSubTab] = useState('cockpit'); // 'cockpit' | 'metas' | 'orcamento' | 'cenarios' | 'simulador'
   const [considerarSabado, setConsiderarSabado] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -121,7 +121,72 @@ export const PlanejamentoManager = () => {
     });
   }, [metasConfig, dreData, orcamentos, mecanicos, selectedMonth, considerarSabado]);
 
-  // 4. Projeções de Cenários
+  // 4. Cálculos do Cockpit / Visão Geral Financeira
+  const contasPagarMes = useMemo(() => {
+    return (gastosFixos || []).filter(g => {
+      const match = !selectedMonth || (g.data_vencimento && g.data_vencimento.startsWith(selectedMonth)) || (g.mes_competencia && g.mes_competencia.startsWith(selectedMonth));
+      return match && g.status === 'em_aberto';
+    });
+  }, [gastosFixos, selectedMonth]);
+
+  const totalContasPagar = useMemo(() => {
+    return contasPagarMes.reduce((acc, g) => acc + (parseFloat(g.valor) || 0), 0);
+  }, [contasPagarMes]);
+
+  const contasReceber = useMemo(() => {
+    return (orcamentos || []).filter(o => {
+      const status = (o.status || '').toLowerCase();
+      const isValido = status.includes('finalizado') || status.includes('conclu') || status.includes('aprovado');
+      return isValido && !o.pago;
+    });
+  }, [orcamentos]);
+
+  const totalContasReceber = useMemo(() => {
+    return contasReceber.reduce((acc, o) => {
+      const total = parseFloat(o.valor_total || o.total) || 0;
+      const jaPago = parseFloat(o.valor_pago || o.pago_parcial) || 0;
+      return acc + Math.max(0, total - jaPago);
+    }, 0);
+  }, [contasReceber]);
+
+  const caixaMes = useMemo(() => {
+    let entradas = 0;
+    let saidas = 0;
+    (fluxoCaixa || []).forEach(fc => {
+      if (fc.data && fc.data.startsWith(selectedMonth)) {
+        (fc.entradas || []).forEach(e => { entradas += parseFloat(e.valor) || 0; });
+        (fc.saidas || []).forEach(s => { saidas += parseFloat(s.valor) || 0; });
+      }
+    });
+    return {
+      entradas,
+      saidas,
+      saldo: entradas - saidas
+    };
+  }, [fluxoCaixa, selectedMonth]);
+
+  const alertasFinanceiros = useMemo(() => {
+    const list = [];
+    const hoje = new Date().toISOString().split('T')[0];
+    const vencidos = contasPagarMes.filter(g => g.data_vencimento && g.data_vencimento < hoje);
+    if (vencidos.length > 0) {
+      list.push({ tipo: 'erro', texto: `🚨 ${vencidos.length} conta(s) a pagar com vencimento atrasado no mês!` });
+    }
+    if (contasPagarMes.length > 0) {
+      list.push({ tipo: 'aviso', texto: `📌 ${contasPagarMes.length} conta(s) a pagar em aberto (${formatCurrency(totalContasPagar)})` });
+    }
+    if (contasReceber.length > 0) {
+      list.push({ tipo: 'info', texto: `💳 ${contasReceber.length} O.S. finalizada(s) aguardando recebimento (${formatCurrency(totalContasReceber)})` });
+    }
+    if (atingimento.receitaRealizada < atingimento.pontoEquilibrio) {
+      list.push({ tipo: 'atencao', texto: `⚖️ Faltam ${formatCurrency(atingimento.pontoEquilibrio - atingimento.receitaRealizada)} para o Ponto de Equilíbrio (Break-Even).` });
+    } else {
+      list.push({ tipo: 'sucesso', texto: `🎉 Ponto de Equilíbrio batido! Lucro operacional estimado em ${formatCurrency(atingimento.lucroRealizado)}.` });
+    }
+    return list;
+  }, [contasPagarMes, totalContasPagar, contasReceber, totalContasReceber, atingimento]);
+
+  // 5. Projeções de Cenários
   const cenarios = useMemo(() => {
     return calcularCenariosProjecao({
       receitaRealizada: atingimento.receitaRealizada,
@@ -132,7 +197,7 @@ export const PlanejamentoManager = () => {
     });
   }, [atingimento]);
 
-  // 5. Simulação de Lucro Desejado
+  // 6. Simulação de Lucro Desejado
   const simulacao = useMemo(() => {
     return simularFaturamentoLucro({
       despesasFixas: atingimento.despesasFixas,
@@ -143,7 +208,7 @@ export const PlanejamentoManager = () => {
     });
   }, [atingimento, simLucroAlvo]);
 
-  // 6. Matriz Orçado vs Realizado
+  // 7. Matriz Orçado vs Realizado
   const matrizOrcamento = useMemo(() => {
     return calcularOrcadoVsRealizado({
       orcamentoCategorias: metasConfig.orcamento_categorias || {},
@@ -419,9 +484,10 @@ export const PlanejamentoManager = () => {
       {/* Navegação por Sub-Abas */}
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #2a2a35', marginBottom: '20px', flexWrap: 'wrap' }}>
         {[
+          { id: 'cockpit', label: '🧭 Visão Geral & Cockpit' },
           { id: 'metas', label: '🎯 Metas do Mês & Equipe' },
           { id: 'orcamento', label: '📊 Orçado vs Realizado (DRE)' },
-          { id: 'cenarios', label: '🔮 Projeção de Cenários (Fim do Mês)' },
+          { id: 'cenarios', label: '🔮 Projeção de Cenários' },
           { id: 'simulador', label: '🧮 Simulador de Metas & Lucro' }
         ].map(tab => (
           <button
@@ -443,6 +509,132 @@ export const PlanejamentoManager = () => {
           </button>
         ))}
       </div>
+
+      {/* Conteúdo da Aba 0: Cockpit & Visão Geral Financeira */}
+      {activeSubTab === 'cockpit' && (
+        <div>
+          {/* Alertas Financeiros */}
+          {alertasFinanceiros.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+              {alertasFinanceiros.map((alt, aIdx) => {
+                let borderCol = '#38bdf8';
+                let bgCol = 'rgba(56,189,248,0.1)';
+                if (alt.tipo === 'erro') { borderCol = '#ef4444'; bgCol = 'rgba(239,68,68,0.15)'; }
+                else if (alt.tipo === 'aviso' || alt.tipo === 'atencao') { borderCol = '#f59e0b'; bgCol = 'rgba(245,158,11,0.15)'; }
+                else if (alt.tipo === 'sucesso') { borderCol = '#10b981'; bgCol = 'rgba(16,185,129,0.15)'; }
+
+                return (
+                  <div key={aIdx} style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: bgCol,
+                    borderLeft: `4px solid ${borderCol}`,
+                    color: '#fff',
+                    fontSize: '0.85rem',
+                    fontWeight: '500'
+                  }}>
+                    {alt.texto}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Grids da Visão Geral */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+            {/* Bloco 1: Caixa do Mês (Financeiro) */}
+            <div style={{ background: '#181824', padding: '20px', borderRadius: '10px', border: '1px solid #2a2a35' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h4 style={{ margin: 0, color: '#38bdf8', fontSize: '0.95rem' }}>💵 Fluxo de Caixa ({selectedMonth})</h4>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Financeiro / Realizado</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                <span style={{ color: '#94a3b8' }}>Entradas de Caixa:</span>
+                <strong style={{ color: '#10b981' }}>{formatCurrency(caixaMes.entradas)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.85rem' }}>
+                <span style={{ color: '#94a3b8' }}>Saídas de Caixa:</span>
+                <strong style={{ color: '#ef4444' }}>{formatCurrency(caixaMes.saidas)}</strong>
+              </div>
+              <div style={{ borderTop: '1px solid #28283a', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>Resultado Financeiro:</span>
+                <strong style={{ fontSize: '1.1rem', color: caixaMes.saldo >= 0 ? '#10b981' : '#ef4444' }}>
+                  {formatCurrency(caixaMes.saldo)}
+                </strong>
+              </div>
+            </div>
+
+            {/* Bloco 2: Contas a Pagar e a Receber */}
+            <div style={{ background: '#181824', padding: '20px', borderRadius: '10px', border: '1px solid #2a2a35' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h4 style={{ margin: 0, color: '#f59e0b', fontSize: '0.95rem' }}>📑 Contas a Pagar & Receber</h4>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Pendências Ativas</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                <span style={{ color: '#94a3b8' }}>A Receber ({contasReceber.length} clientes):</span>
+                <strong style={{ color: '#38bdf8' }}>{formatCurrency(totalContasReceber)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.85rem' }}>
+                <span style={{ color: '#94a3b8' }}>A Pagar ({contasPagarMes.length} despesas):</span>
+                <strong style={{ color: '#f87171' }}>{formatCurrency(totalContasPagar)}</strong>
+              </div>
+              <div style={{ borderTop: '1px solid #28283a', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>Saldo Previsto Futuro:</span>
+                <strong style={{ fontSize: '1.1rem', color: (totalContasReceber - totalContasPagar) >= 0 ? '#38bdf8' : '#ef4444' }}>
+                  {formatCurrency(totalContasReceber - totalContasPagar)}
+                </strong>
+              </div>
+            </div>
+
+            {/* Bloco 3: DRE por Competência */}
+            <div style={{ background: '#181824', padding: '20px', borderRadius: '10px', border: '1px solid #2a2a35' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h4 style={{ margin: 0, color: '#a855f7', fontSize: '0.95rem' }}>📊 DRE Gerencial ({selectedMonth})</h4>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Regime de Competência</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                <span style={{ color: '#94a3b8' }}>Receita Líquida:</span>
+                <strong style={{ color: '#fff' }}>{formatCurrency(atingimento.receitaRealizada)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                <span style={{ color: '#94a3b8' }}>Margem Contribuição:</span>
+                <strong style={{ color: '#10b981' }}>{formatCurrency(atingimento.margemContribuicao)} ({atingimento.margemContribuicaoPercent.toFixed(1)}%)</strong>
+              </div>
+              <div style={{ borderTop: '1px solid #28283a', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>Lucro Líquido DRE:</span>
+                <strong style={{ fontSize: '1.1rem', color: atingimento.lucroRealizado >= 0 ? '#10b981' : '#ef4444' }}>
+                  {formatCurrency(atingimento.lucroRealizado)}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Destaque Conciliação DRE x Caixa */}
+          <div style={{ background: '#13131c', padding: '16px 20px', borderRadius: '10px', border: '1px solid #232332', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <strong style={{ color: '#fff', fontSize: '0.95rem' }}>⚖️ Conciliação Competência (DRE) vs Financeiro (Caixa)</strong>
+              <p style={{ margin: '3px 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+                Diferença temporária entre lucro apurado pelos serviços executados ({formatCurrency(atingimento.lucroRealizado)}) e dinheiro que entrou no caixa ({formatCurrency(caixaMes.saldo)}): <strong style={{ color: '#f59e0b' }}>{formatCurrency(atingimento.lucroRealizado - caixaMes.saldo)}</strong>
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveSubTab('metas')}
+              style={{
+                background: '#3b82f6',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '0.85rem'
+              }}
+            >
+              Definir Metas & Orçamento →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Conteúdo da Aba 1: Metas do Mês, Especialidades & Mecânicos */}
       {activeSubTab === 'metas' && (
