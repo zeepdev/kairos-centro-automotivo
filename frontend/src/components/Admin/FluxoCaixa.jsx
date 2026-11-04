@@ -3,6 +3,14 @@ import { supabase } from '../../lib/supabase';
 import { pdf } from '@react-pdf/renderer';
 import { FluxoCaixaPDF } from './FluxoCaixaPDF';
 import { registrarLog } from '../../services/logService';
+import { 
+  sugerirClassificacao, 
+  CATEGORIAS_DRE, 
+  GRUPOS_DRE, 
+  ATIVIDADES_OPERACIONAIS, 
+  CENTROS_DE_CUSTO 
+} from '../../lib/dreCalculator';
+import { saveDREClassificacoesBatch } from '../../lib/dreStorage';
 
 // Funções utilitárias seguras para blindagem contra dados nulos/corrompidos
 const safeArray = (val) => {
@@ -294,9 +302,28 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
   const [dinheiroEmpresaAnterior, setDinheiroEmpresaAnterior] = useState('0');
   const [fundoReservaAnterior, setFundoReservaAnterior] = useState('0');
 
-  // Listas de lançamentos
-  const [entradas, setEntradas] = useState([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
-  const [saidas, setSaidas] = useState([{ descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
+  // Listas de lançamentos com classificação contábil integrada
+  const [entradas, setEntradas] = useState([{ 
+    descricao: '', 
+    valor: '', 
+    metodo: 'PIX', 
+    conta: 'Mercado Pago KAIRÓS',
+    categoria_dre: 'RECEITA_BRUTA_MO',
+    subcategoria_dre: 'Serviço de Oficina',
+    atividade_operacional: 'Mecânica Geral',
+    centro_custo: 'Operacional Oficina',
+    socio_nome: ''
+  }]);
+  const [saidas, setSaidas] = useState([{ 
+    descricao: '', 
+    valor: '', 
+    conta: 'Caixa da Empresa',
+    categoria_dre: 'PENDENTE',
+    subcategoria_dre: 'Aguardando Classificação Manual',
+    atividade_operacional: 'Administrativo / Geral',
+    centro_custo: 'Operacional Oficina',
+    socio_nome: ''
+  }]);
 
   // Valores Finais Declarados (Fim do Dia)
   const [fundoCaixaFinal, setFundoCaixaFinal] = useState('');
@@ -396,11 +423,17 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
           const exists = updated.some(e => e && e.descricao && e.descricao.includes(`Orçamento #${b.id}`));
 
           if (!exists) {
+            const auto = sugerirClassificacao({ descricao: desc, valor: b.valor_total }, 'fluxo_caixa_entrada');
             const newEntry = {
               descricao: desc,
               valor: (parseFloat(b.valor_total) || 0).toString(),
               metodo: b.metodo_pagamento || 'PIX',
-              conta: b.conta_destino || 'Mercado Pago KAIRÓS'
+              conta: b.conta_destino || 'Mercado Pago KAIRÓS',
+              categoria_dre: auto.categoria_dre,
+              subcategoria_dre: auto.subcategoria_dre,
+              atividade_operacional: auto.atividade_operacional,
+              centro_custo: auto.centro_custo,
+              socio_nome: auto.socio_nome || ''
             };
 
             if (updated.length === 1 && !updated[0]?.descricao && !updated[0]?.valor) {
@@ -461,12 +494,18 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
               ? g.valor_pago_real
               : (parseFloat(g.valor) || 0);
 
+            const auto = sugerirClassificacao({ descricao: desc, valor: valNum }, 'fluxo_caixa_saida');
             const newEntry = {
               descricao: desc,
               valor: valNum.toString(),
               metodo: g.metodo_pagamento || 'PIX',
               conta: g.conta_destino || 'Mercado Pago ROMANOS',
-              gasto_id: g.id
+              gasto_id: g.id,
+              categoria_dre: g.dre_categoria || auto.categoria_dre,
+              subcategoria_dre: auto.subcategoria_dre,
+              atividade_operacional: auto.atividade_operacional,
+              centro_custo: auto.centro_custo,
+              socio_nome: auto.socio_nome || ''
             };
 
             if (updated.length === 1 && !updated[0]?.descricao && !updated[0]?.valor) {
@@ -783,7 +822,20 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
 
   // Funções para manipular a lista de entradas
   const handleAddEntrada = () => {
-    setEntradas([...entradas, { descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
+    setEntradas([
+      ...entradas,
+      { 
+        descricao: '', 
+        valor: '', 
+        metodo: 'PIX', 
+        conta: 'Mercado Pago KAIRÓS',
+        categoria_dre: 'RECEITA_BRUTA_MO',
+        subcategoria_dre: 'Serviço de Oficina',
+        atividade_operacional: 'Mecânica Geral',
+        centro_custo: 'Operacional Oficina',
+        socio_nome: ''
+      }
+    ]);
   };
 
   const handleRemoveEntrada = (index) => {
@@ -800,12 +852,34 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     } else if (field === 'metodo' && list[index].conta === 'Caixa da Empresa' && value !== 'Dinheiro') {
       list[index].conta = 'Mercado Pago KAIRÓS';
     }
+
+    if (field === 'descricao' && value && value.trim().length > 1) {
+      const auto = sugerirClassificacao({ descricao: value, valor: list[index].valor }, 'fluxo_caixa_entrada');
+      list[index].categoria_dre = auto.categoria_dre;
+      list[index].subcategoria_dre = auto.subcategoria_dre;
+      if (auto.socio_nome) list[index].socio_nome = auto.socio_nome;
+      if (auto.atividade_operacional) list[index].atividade_operacional = auto.atividade_operacional;
+      if (auto.centro_custo) list[index].centro_custo = auto.centro_custo;
+    }
+
     setEntradas(list);
   };
 
   // Funções para manipular a lista de saídas
   const handleAddSaida = () => {
-    setSaidas([...saidas, { descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
+    setSaidas([
+      ...saidas,
+      { 
+        descricao: '', 
+        valor: '', 
+        conta: 'Caixa da Empresa',
+        categoria_dre: 'PENDENTE',
+        subcategoria_dre: 'Aguardando Classificação Manual',
+        atividade_operacional: 'Administrativo / Geral',
+        centro_custo: 'Operacional Oficina',
+        socio_nome: ''
+      }
+    ]);
   };
 
   const handleRemoveSaida = (index) => {
@@ -817,6 +891,16 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
   const handleSaidaChange = (index, field, value) => {
     const list = [...saidas];
     list[index][field] = value;
+
+    if (field === 'descricao' && value && value.trim().length > 1) {
+      const auto = sugerirClassificacao({ descricao: value, valor: list[index].valor }, 'fluxo_caixa_saida');
+      list[index].categoria_dre = auto.categoria_dre;
+      list[index].subcategoria_dre = auto.subcategoria_dre;
+      if (auto.socio_nome) list[index].socio_nome = auto.socio_nome;
+      if (auto.atividade_operacional) list[index].atividade_operacional = auto.atividade_operacional;
+      if (auto.centro_custo) list[index].centro_custo = auto.centro_custo;
+    }
+
     setSaidas(list);
   };
 
@@ -843,8 +927,27 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
 
     // Resetar campos
     setDataCaixa(new Date().toISOString().split('T')[0]);
-    setEntradas([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
-    setSaidas([{ descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
+    setEntradas([{ 
+      descricao: '', 
+      valor: '', 
+      metodo: 'PIX', 
+      conta: 'Mercado Pago KAIRÓS',
+      categoria_dre: 'RECEITA_BRUTA_MO',
+      subcategoria_dre: 'Serviço de Oficina',
+      atividade_operacional: 'Mecânica Geral',
+      centro_custo: 'Operacional Oficina',
+      socio_nome: ''
+    }]);
+    setSaidas([{ 
+      descricao: '', 
+      valor: '', 
+      conta: 'Caixa da Empresa',
+      categoria_dre: 'PENDENTE',
+      subcategoria_dre: 'Aguardando Classificação Manual',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      socio_nome: ''
+    }]);
     setFundoCaixaFinal('');
     setDinheiroEmpresaFinal('');
     setFundoReservaFinal('');
@@ -932,6 +1035,62 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
 
       if (error) throw error;
 
+      // 2. Sincronizar em lote com as Classificações da DRE
+      try {
+        const mesCompetencia = dataCaixa.substring(0, 7);
+        const lotesDRE = [];
+
+        entradasValidas.forEach((item, index) => {
+          lotesDRE.push({
+            id: `fc_entrada_${dataCaixa}_${index}`,
+            origem_tipo: 'fluxo_caixa_entrada',
+            origem_id: dataCaixa,
+            origem_ref: `Entrada #${index + 1}`,
+            item_index: index,
+            descricao: item.descricao,
+            valor: parseFloat(item.valor) || 0,
+            categoria_dre: item.categoria_dre || 'RECEITA_BRUTA_MO',
+            subcategoria_dre: item.subcategoria_dre || '',
+            socio_nome: item.socio_nome || null,
+            atividade_operacional: item.atividade_operacional || 'Mecânica Geral',
+            centro_custo: item.centro_custo || 'Operacional Oficina',
+            conta_financeira: item.conta,
+            forma_pagamento: item.metodo || 'PIX',
+            mes_competencia: mesCompetencia,
+            status: 'confirmado',
+            updated_at: new Date().toISOString()
+          });
+        });
+
+        saidasValidas.forEach((item, index) => {
+          lotesDRE.push({
+            id: `fc_saida_${dataCaixa}_${index}`,
+            origem_tipo: 'fluxo_caixa_saida',
+            origem_id: dataCaixa,
+            origem_ref: `Saída #${index + 1}`,
+            item_index: index,
+            descricao: item.descricao,
+            valor: parseFloat(item.valor) || 0,
+            categoria_dre: item.categoria_dre || 'PENDENTE',
+            subcategoria_dre: item.subcategoria_dre || '',
+            socio_nome: item.socio_nome || null,
+            atividade_operacional: item.atividade_operacional || 'Administrativo / Geral',
+            centro_custo: item.centro_custo || 'Operacional Oficina',
+            conta_financeira: item.conta,
+            forma_pagamento: item.metodo || 'Dinheiro',
+            mes_competencia: mesCompetencia,
+            status: 'confirmado',
+            updated_at: new Date().toISOString()
+          });
+        });
+
+        if (lotesDRE.length > 0) {
+          await saveDREClassificacoesBatch(lotesDRE);
+        }
+      } catch (errDRE) {
+        console.warn('Aviso ao sincronizar classificações contábeis da DRE:', errDRE);
+      }
+
       // Limpar rascunho apenas se for fechamento de hoje
       const hoje = new Date().toISOString().split('T')[0];
       if (dataCaixa === hoje) {
@@ -950,7 +1109,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
       const updatedHistory = await fetchHistorico();
       resetForm(updatedHistory);
       
-      alert('Fechamento de caixa salvo com sucesso no sistema! Para enviar o PDF para o Google Drive, clique no botão "☁️ Enviar para o Drive".');
+      alert('Fechamento de caixa salvo com sucesso no sistema e integrado à DRE! Para enviar o PDF para o Google Drive, clique no botão "☁️ Enviar para o Drive".');
     } catch (err) {
       console.warn('Erro ao salvar no banco, salvando cópia local em localStorage:', err.message);
 
@@ -967,11 +1126,65 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
       localStorage.setItem('kadosh_fluxo_caixa', JSON.stringify(updated));
       setHistorico(updated);
 
+      // Sincronizar em lote com as Classificações locais da DRE
+      try {
+        const mesCompetencia = dataCaixa.substring(0, 7);
+        const lotesDRE = [];
+
+        entradasValidas.forEach((item, index) => {
+          lotesDRE.push({
+            id: `fc_entrada_${dataCaixa}_${index}`,
+            origem_tipo: 'fluxo_caixa_entrada',
+            origem_id: dataCaixa,
+            origem_ref: `Entrada #${index + 1}`,
+            item_index: index,
+            descricao: item.descricao,
+            valor: parseFloat(item.valor) || 0,
+            categoria_dre: item.categoria_dre || 'RECEITA_BRUTA_MO',
+            subcategoria_dre: item.subcategoria_dre || '',
+            socio_nome: item.socio_nome || null,
+            atividade_operacional: item.atividade_operacional || 'Mecânica Geral',
+            centro_custo: item.centro_custo || 'Operacional Oficina',
+            conta_financeira: item.conta,
+            forma_pagamento: item.metodo || 'PIX',
+            mes_competencia: mesCompetencia,
+            status: 'confirmado',
+            updated_at: new Date().toISOString()
+          });
+        });
+
+        saidasValidas.forEach((item, index) => {
+          lotesDRE.push({
+            id: `fc_saida_${dataCaixa}_${index}`,
+            origem_tipo: 'fluxo_caixa_saida',
+            origem_id: dataCaixa,
+            origem_ref: `Saída #${index + 1}`,
+            item_index: index,
+            descricao: item.descricao,
+            valor: parseFloat(item.valor) || 0,
+            categoria_dre: item.categoria_dre || 'PENDENTE',
+            subcategoria_dre: item.subcategoria_dre || '',
+            socio_nome: item.socio_nome || null,
+            atividade_operacional: item.atividade_operacional || 'Administrativo / Geral',
+            centro_custo: item.centro_custo || 'Operacional Oficina',
+            conta_financeira: item.conta,
+            forma_pagamento: item.metodo || 'Dinheiro',
+            mes_competencia: mesCompetencia,
+            status: 'confirmado',
+            updated_at: new Date().toISOString()
+          });
+        });
+
+        if (lotesDRE.length > 0) {
+          await saveDREClassificacoesBatch(lotesDRE);
+        }
+      } catch (errLocalDRE) {}
+
       const hoje = new Date().toISOString().split('T')[0];
       if (dataCaixa === hoje) {
         localStorage.removeItem('kadosh_fluxo_caixa_draft');
       }
-      alert('Fechamento gravado localmente no navegador (localStorage). Para enviar o PDF para o Google Drive, clique no botão "☁️ Enviar para o Drive".');
+      alert('Fechamento gravado localmente no navegador (localStorage) e integrado à DRE. Para enviar o PDF para o Google Drive, clique no botão "☁️ Enviar para o Drive".');
       resetForm(updated);
     } finally {
       setSaving(false);
@@ -998,8 +1211,27 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     setDinheiroEmpresaFinal('');
     setFundoReservaFinal('');
     setObservacoes('');
-    setEntradas([{ descricao: '', valor: '', metodo: 'PIX', conta: 'Mercado Pago KAIRÓS' }]);
-    setSaidas([{ descricao: '', valor: '', conta: 'Caixa da Empresa' }]);
+    setEntradas([{ 
+      descricao: '', 
+      valor: '', 
+      metodo: 'PIX', 
+      conta: 'Mercado Pago KAIRÓS',
+      categoria_dre: 'RECEITA_BRUTA_MO',
+      subcategoria_dre: 'Serviço de Oficina',
+      atividade_operacional: 'Mecânica Geral',
+      centro_custo: 'Operacional Oficina',
+      socio_nome: ''
+    }]);
+    setSaidas([{ 
+      descricao: '', 
+      valor: '', 
+      conta: 'Caixa da Empresa',
+      categoria_dre: 'PENDENTE',
+      subcategoria_dre: 'Aguardando Classificação Manual',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      socio_nome: ''
+    }]);
 
     syncPaidBudgets(hoje);
     syncPaidGastosFixos(hoje);
@@ -1440,45 +1672,125 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                   </button>
                 </div>
                 
-                {entradas.map((item, index) => (
-                  <div key={index} style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 1fr 1.2fr 40px', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                    <input 
-                      type="text" placeholder="Ex: Serviço Placa ABC" value={item.descricao} 
-                      onChange={(e) => handleEntradaChange(index, 'descricao', e.target.value)}
-                      style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}
-                    />
-                    <input 
-                      type="number" step="0.01" placeholder="Valor (R$)" value={item.valor} 
-                      onChange={(e) => handleEntradaChange(index, 'valor', e.target.value)}
-                      style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}
-                    />
-                    <select 
-                      value={item.metodo || 'PIX'} onChange={(e) => handleEntradaChange(index, 'metodo', e.target.value)}
-                      style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}
+                {entradas.map((item, index) => {
+                  const catObj = CATEGORIAS_DRE[item.categoria_dre] || CATEGORIAS_DRE.RECEITA_BRUTA_MO;
+                  const grupoInfo = GRUPOS_DRE[catObj?.grupo] || GRUPOS_DRE.receita_bruta;
+
+                  return (
+                    <div 
+                      key={index} 
+                      style={{ 
+                        background: '#111116', 
+                        border: '1px solid #23232c', 
+                        borderRadius: '8px', 
+                        padding: '10px 12px', 
+                        marginBottom: '10px' 
+                      }}
                     >
-                      <option value="PIX">PIX</option>
-                      <option value="Dinheiro">Dinheiro</option>
-                      <option value="Cartão Crédito">Cartão Crédito</option>
-                      <option value="Cartão Débito">Cartão Débito</option>
-                      <option value="Banco">Banco/Transf.</option>
-                    </select>
-                    <select 
-                      value={item.conta} onChange={(e) => handleEntradaChange(index, 'conta', e.target.value)}
-                      disabled={item.metodo === 'Dinheiro'}
-                      style={{ width: '100%', padding: '8px', background: item.metodo === 'Dinheiro' ? '#222' : '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: item.metodo === 'Dinheiro' ? '#888' : '#fff' }}
-                    >
-                      <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS</option>
-                      <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS</option>
-                      <option value="Caixa da Empresa">Caixa da Empresa</option>
-                    </select>
-                    <button 
-                      type="button" onClick={() => handleRemoveEntrada(index)} disabled={entradas.length === 1}
-                      style={{ background: 'transparent', border: 'none', color: '#f87171', fontSize: '1.2rem', cursor: 'pointer' }}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 1fr 1.2fr 40px', gap: '8px', alignItems: 'center' }}>
+                        <input 
+                          type="text" placeholder="Ex: Serviço Placa ABC / Revisão" value={item.descricao || ''} 
+                          onChange={(e) => handleEntradaChange(index, 'descricao', e.target.value)}
+                          style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                        <input 
+                          type="number" step="0.01" placeholder="Valor (R$)" value={item.valor || ''} 
+                          onChange={(e) => handleEntradaChange(index, 'valor', e.target.value)}
+                          style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                        <select 
+                          value={item.metodo || 'PIX'} onChange={(e) => handleEntradaChange(index, 'metodo', e.target.value)}
+                          style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+                        >
+                          <option value="PIX">PIX</option>
+                          <option value="Dinheiro">Dinheiro</option>
+                          <option value="Cartão Crédito">Cartão Crédito</option>
+                          <option value="Cartão Débito">Cartão Débito</option>
+                          <option value="Banco">Banco/Transf.</option>
+                        </select>
+                        <select 
+                          value={item.conta} onChange={(e) => handleEntradaChange(index, 'conta', e.target.value)}
+                          disabled={item.metodo === 'Dinheiro'}
+                          style={{ width: '100%', padding: '8px', background: item.metodo === 'Dinheiro' ? '#222' : '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: item.metodo === 'Dinheiro' ? '#888' : '#fff', fontSize: '0.85rem' }}
+                        >
+                          <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS</option>
+                          <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS</option>
+                          <option value="Caixa da Empresa">Caixa da Empresa</option>
+                        </select>
+                        <button 
+                          type="button" onClick={() => handleRemoveEntrada(index)} disabled={entradas.length === 1}
+                          style={{ background: 'transparent', border: 'none', color: '#f87171', fontSize: '1.2rem', cursor: 'pointer' }}
+                          title="Remover entrada"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+
+                      {/* Barra de Classificação Contábil DRE */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #22222a', flexWrap: 'wrap', fontSize: '0.78rem' }}>
+                        <span style={{ color: grupoInfo.cor, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          🏷️ DRE:
+                        </span>
+                        <select
+                          value={item.categoria_dre || 'RECEITA_BRUTA_MO'}
+                          onChange={(e) => handleEntradaChange(index, 'categoria_dre', e.target.value)}
+                          style={{
+                            background: '#0a0a0c',
+                            color: grupoInfo.cor,
+                            border: `1px solid ${grupoInfo.cor}55`,
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            fontSize: '0.78rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          <optgroup label="── 🟢 Receitas Operacionais ──">
+                            <option value="RECEITA_BRUTA_MO">Receita de Mão de Obra (Serviços em Geral)</option>
+                            <option value="RECEITA_MECANICA_GERAL">Mecânica Geral & Motor</option>
+                            <option value="RECEITA_REVISAO_PREVENTIVA">Revisão Preventiva / Check-up</option>
+                            <option value="RECEITA_TROCA_OLEO">Troca de Óleo & Filtros</option>
+                            <option value="RECEITA_FREIOS_SUSPENSAO">Freios, Suspensão & Direção</option>
+                            <option value="RECEITA_DIAGNOSTICO_ELETRICA">Diagnóstico & Elétrica / Injeção</option>
+                            <option value="RECEITA_BRUTA_PECAS">Venda de Peças Faturadas</option>
+                          </optgroup>
+                          <optgroup label="── 🟣 Movimentações Patrimoniais (Fora da DRE) ──">
+                            <option value="ADIANTAMENTO_CLIENTE">Sinal / Adiantamento de Cliente</option>
+                            <option value="APORTE_EMPRESTIMO_SOCIO">Aporte de Sócio / Empréstimo</option>
+                            <option value="TRANSFERENCIA_CONTAS">Transferência entre Contas</option>
+                          </optgroup>
+                          <optgroup label="── ⚪ Outros ──">
+                            <option value="RECEITA_FINANCEIRA">Rendimento Financeiro</option>
+                            <option value="PENDENTE">Pendente de Classificação</option>
+                          </optgroup>
+                        </select>
+
+                        <span style={{ color: '#888', marginLeft: '6px' }}>🛠️ Atividade:</span>
+                        <select
+                          value={item.atividade_operacional || 'Mecânica Geral'}
+                          onChange={(e) => handleEntradaChange(index, 'atividade_operacional', e.target.value)}
+                          style={{
+                            background: '#0a0a0c',
+                            color: '#ccc',
+                            border: '1px solid #333',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            fontSize: '0.78rem'
+                          }}
+                        >
+                          {ATIVIDADES_OPERACIONAIS.map(atv => (
+                            <option key={atv} value={atv}>{atv}</option>
+                          ))}
+                        </select>
+
+                        {item.socio_nome && (
+                          <span style={{ background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid #a855f755', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem' }}>
+                            👤 Sócio: {item.socio_nome}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
                 <div style={{ textAlign: 'right', color: '#10b981', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '8px' }}>
                   Subtotal Entradas: {formatCurrency(totalEntradas)}
                 </div>
@@ -1498,34 +1810,126 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                   </button>
                 </div>
                 
-                {saidas.map((item, index) => (
-                  <div key={index} style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.9fr 1.3fr 40px', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                    <input 
-                      type="text" placeholder="Ex: VT / Almoço" value={item.descricao} 
-                      onChange={(e) => handleSaidaChange(index, 'descricao', e.target.value)}
-                      style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}
-                    />
-                    <input 
-                      type="number" step="0.01" placeholder="Valor (R$)" value={item.valor} 
-                      onChange={(e) => handleSaidaChange(index, 'valor', e.target.value)}
-                      style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}
-                    />
-                    <select 
-                      value={item.conta} onChange={(e) => handleSaidaChange(index, 'conta', e.target.value)}
-                      style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff' }}
+                {saidas.map((item, index) => {
+                  const catObj = CATEGORIAS_DRE[item.categoria_dre] || CATEGORIAS_DRE.PENDENTE;
+                  const grupoInfo = GRUPOS_DRE[catObj?.grupo] || GRUPOS_DRE.pendente;
+
+                  return (
+                    <div 
+                      key={index} 
+                      style={{ 
+                        background: '#111116', 
+                        border: '1px solid #23232c', 
+                        borderRadius: '8px', 
+                        padding: '10px 12px', 
+                        marginBottom: '10px' 
+                      }}
                     >
-                      <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS</option>
-                      <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS</option>
-                      <option value="Caixa da Empresa">Caixa da Empresa</option>
-                    </select>
-                    <button 
-                      type="button" onClick={() => handleRemoveSaida(index)} disabled={saidas.length === 1}
-                      style={{ background: 'transparent', border: 'none', color: '#f87171', fontSize: '1.2rem', cursor: 'pointer' }}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.9fr 1.3fr 40px', gap: '8px', alignItems: 'center' }}>
+                        <input 
+                          type="text" placeholder="Ex: Peça pastilha Gol / Aluguel / Pró-labore" value={item.descricao || ''} 
+                          onChange={(e) => handleSaidaChange(index, 'descricao', e.target.value)}
+                          style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                        <input 
+                          type="number" step="0.01" placeholder="Valor (R$)" value={item.valor || ''} 
+                          onChange={(e) => handleSaidaChange(index, 'valor', e.target.value)}
+                          style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+                        />
+                        <select 
+                          value={item.conta} onChange={(e) => handleSaidaChange(index, 'conta', e.target.value)}
+                          style={{ width: '100%', padding: '8px', background: '#0a0a0c', border: '1px solid #333', borderRadius: '6px', color: '#fff', fontSize: '0.85rem' }}
+                        >
+                          <option value="Mercado Pago KAIRÓS">Mercado Pago KAIRÓS</option>
+                          <option value="Mercado Pago ROMANOS">Mercado Pago ROMANOS</option>
+                          <option value="Caixa da Empresa">Caixa da Empresa</option>
+                        </select>
+                        <button 
+                          type="button" onClick={() => handleRemoveSaida(index)} disabled={saidas.length === 1}
+                          style={{ background: 'transparent', border: 'none', color: '#f87171', fontSize: '1.2rem', cursor: 'pointer' }}
+                          title="Remover saída"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+
+                      {/* Barra de Classificação Contábil DRE */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #22222a', flexWrap: 'wrap', fontSize: '0.78rem' }}>
+                        <span style={{ color: grupoInfo.cor, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          🏷️ DRE:
+                        </span>
+                        <select
+                          value={item.categoria_dre || 'PENDENTE'}
+                          onChange={(e) => handleSaidaChange(index, 'categoria_dre', e.target.value)}
+                          style={{
+                            background: '#0a0a0c',
+                            color: grupoInfo.cor,
+                            border: `1px solid ${grupoInfo.cor}55`,
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            fontSize: '0.78rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          <optgroup label="── 🟡 Custos Diretos (CSP / CMV) ──">
+                            <option value="CUSTO_DIRETO_PECAS">Peças Aplicadas em Serviços (CMV)</option>
+                            <option value="CUSTO_PESSOAL_OPERACIONAL">Salário / Mão de Obra de Mecânicos</option>
+                            <option value="CUSTO_DIRETO_COMISSOES">Comissões de Mecânicos</option>
+                            <option value="CUSTO_DIRETO_TERCEIROS">Terceirizados (Torno, Alinhamento, Guincho)</option>
+                            <option value="CUSTO_INSUMOS_OFICINA">Insumos (Óleo, Desengraxante, Estopa)</option>
+                          </optgroup>
+                          <optgroup label="── 🔵 Despesas Operacionais e Fixas ──">
+                            <option value="DESPESA_OCUPACAO">Ocupação (Aluguel, Energia, Água, IPTU)</option>
+                            <option value="DESPESA_ADMINISTRATIVA">Administrativo (Sistemas, Contador, Internet)</option>
+                            <option value="DESPESA_COMERCIAL">Marketing & Anúncios (Tráfego, Fachada)</option>
+                            <option value="DESPESA_BENEFICIOS_EQUIPE">Benefícios Equipe (Almoço, Lanche, VT, Uber)</option>
+                            <option value="PRO_LABORE_SOCIOS">Pró-Labore Sócios (Rafael, Thaís, Ákysa)</option>
+                            <option value="MANUTENCAO_FERRAMENTAL">Ferramentas & Infraestrutura</option>
+                          </optgroup>
+                          <optgroup label="── 🟠 Deduções & Tributos ──">
+                            <option value="DEDUCOES_TRIBUTOS">Tributos e Impostos Oficiais (Simples/ISS)</option>
+                            <option value="CANCELAMENTOS_DEVOLUCOES">Cancelamentos e Reembolsos</option>
+                          </optgroup>
+                          <optgroup label="── ⚪ Resultado Financeiro ──">
+                            <option value="DESPESA_FINANCEIRA">Taxas de Cartão, Tarifas & Juros</option>
+                          </optgroup>
+                          <optgroup label="── 🟣 Movimentações Patrimoniais (FORA DA DRE) ──">
+                            <option value="DISTRIBUICAO_LUCROS">Distribuição de Lucros aos Sócios</option>
+                            <option value="APORTE_EMPRESTIMO_SOCIO">Aporte / Empréstimo de Sócios</option>
+                            <option value="TRANSFERENCIA_CONTAS">Transferência entre Contas / Troco</option>
+                          </optgroup>
+                          <optgroup label="── ⚠️ Outros ──">
+                            <option value="PENDENTE">Pendente de Classificação Contábil</option>
+                          </optgroup>
+                        </select>
+
+                        <span style={{ color: '#888', marginLeft: '6px' }}>🏢 Centro de Custo:</span>
+                        <select
+                          value={item.centro_custo || 'Operacional Oficina'}
+                          onChange={(e) => handleSaidaChange(index, 'centro_custo', e.target.value)}
+                          style={{
+                            background: '#0a0a0c',
+                            color: '#ccc',
+                            border: '1px solid #333',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            fontSize: '0.78rem'
+                          }}
+                        >
+                          {CENTROS_DE_CUSTO.map(cc => (
+                            <option key={cc} value={cc}>{cc}</option>
+                          ))}
+                        </select>
+
+                        {item.socio_nome && (
+                          <span style={{ background: 'rgba(168,85,247,0.15)', color: '#c084fc', border: '1px solid #a855f755', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem' }}>
+                            👤 Sócio: {item.socio_nome}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
                 <div style={{ textAlign: 'right', color: '#ef4444', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '8px' }}>
                   Subtotal Saídas: -{formatCurrency(totalSaidas)}
                 </div>

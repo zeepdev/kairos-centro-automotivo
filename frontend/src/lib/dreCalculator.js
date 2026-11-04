@@ -7,13 +7,43 @@ export const CATEGORIAS_DRE = {
   // 1. Receita Operacional Bruta
   RECEITA_BRUTA_MO: {
     id: 'RECEITA_BRUTA_MO',
-    nome: 'Receita de Mão de Obra (Serviços)',
+    nome: 'Receita de Mão de Obra (Serviços em Geral)',
     grupo: 'receita_bruta',
     sinal: '+'
   },
   RECEITA_BRUTA_PECAS: {
     id: 'RECEITA_BRUTA_PECAS',
-    nome: 'Receita de Venda de Peças',
+    nome: 'Receita de Venda de Peças Faturadas',
+    grupo: 'receita_bruta',
+    sinal: '+'
+  },
+  RECEITA_MECANICA_GERAL: {
+    id: 'RECEITA_MECANICA_GERAL',
+    nome: 'Receita — Mecânica Geral & Motor',
+    grupo: 'receita_bruta',
+    sinal: '+'
+  },
+  RECEITA_REVISAO_PREVENTIVA: {
+    id: 'RECEITA_REVISAO_PREVENTIVA',
+    nome: 'Receita — Revisão Preventiva / Check-up',
+    grupo: 'receita_bruta',
+    sinal: '+'
+  },
+  RECEITA_TROCA_OLEO: {
+    id: 'RECEITA_TROCA_OLEO',
+    nome: 'Receita — Troca de Óleo & Filtros',
+    grupo: 'receita_bruta',
+    sinal: '+'
+  },
+  RECEITA_FREIOS_SUSPENSAO: {
+    id: 'RECEITA_FREIOS_SUSPENSAO',
+    nome: 'Receita — Freios, Suspensão & Direção',
+    grupo: 'receita_bruta',
+    sinal: '+'
+  },
+  RECEITA_DIAGNOSTICO_ELETRICA: {
+    id: 'RECEITA_DIAGNOSTICO_ELETRICA',
+    nome: 'Receita — Diagnóstico & Elétrica / Injeção',
     grupo: 'receita_bruta',
     sinal: '+'
   },
@@ -21,7 +51,7 @@ export const CATEGORIAS_DRE = {
   // 2. Deduções da Receita Bruta
   DEDUCOES_TRIBUTOS: {
     id: 'DEDUCOES_TRIBUTOS',
-    nome: 'Tributos, Impostos e Taxas Municipais',
+    nome: 'Tributos, Impostos e Taxas Municipais (Simples/ISS)',
     grupo: 'deducoes',
     sinal: '-'
   },
@@ -35,7 +65,7 @@ export const CATEGORIAS_DRE = {
   // 3. Custos Diretos dos Serviços Prestados (CSP / CMV)
   CUSTO_DIRETO_PECAS: {
     id: 'CUSTO_DIRETO_PECAS',
-    nome: 'Custo de Aquisição de Peças Utilizadas',
+    nome: 'Custo de Aquisição de Peças Utilizadas (CMV)',
     grupo: 'custo_direto',
     sinal: '-'
   },
@@ -105,13 +135,13 @@ export const CATEGORIAS_DRE = {
   // 5. Resultado Financeiro
   DESPESA_FINANCEIRA: {
     id: 'DESPESA_FINANCEIRA',
-    nome: 'Despesas Financeiras (Taxas de Máquina de Cartão, Juros, Tarifas)',
+    nome: 'Despesas Financeiras (Taxas de Cartão, Juros, Tarifas)',
     grupo: 'resultado_financeiro',
     sinal: '-'
   },
   RECEITA_FINANCEIRA: {
     id: 'RECEITA_FINANCEIRA',
-    nome: 'Receitas Financeiras (Rendimentos de Aplicação, Descontos Obtidos)',
+    nome: 'Receitas Financeiras (Rendimentos de Aplicação, Descontos)',
     grupo: 'resultado_financeiro',
     sinal: '+'
   },
@@ -119,13 +149,13 @@ export const CATEGORIAS_DRE = {
   // 6. Movimentações Patrimoniais dos Sócios (NÃO entram no Lucro da DRE)
   DISTRIBUICAO_LUCROS: {
     id: 'DISTRIBUICAO_LUCROS',
-    nome: 'Distribuição de Lucros aos Sócios',
+    nome: 'Distribuição de Lucros aos Sócios (Patrimonial)',
     grupo: 'patrimonial',
     sinal: '•'
   },
   APORTE_EMPRESTIMO_SOCIO: {
     id: 'APORTE_EMPRESTIMO_SOCIO',
-    nome: 'Aporte de Capital ou Empréstimo de Sócios',
+    nome: 'Aporte de Capital ou Empréstimo de Sócios (Patrimonial)',
     grupo: 'patrimonial',
     sinal: '•'
   },
@@ -143,11 +173,41 @@ export const CATEGORIAS_DRE = {
   },
   PENDENTE: {
     id: 'PENDENTE',
-    nome: 'Pendente de Classificação',
+    nome: 'Pendente de Classificação Contábil',
     grupo: 'pendente',
     sinal: '?'
   }
 };
+
+export const GRUPOS_DRE = {
+  receita_bruta: { label: '🟢 Receitas Operacionais', cor: '#10b981' },
+  deducoes: { label: '🟠 Deduções & Tributos', cor: '#f97316' },
+  custo_direto: { label: '🟡 Custos Diretos (CSP/CMV)', cor: '#eab308' },
+  despesa_operacional: { label: '🔵 Despesas Fixas & Operacionais', cor: '#3b82f6' },
+  resultado_financeiro: { label: '⚪ Resultado Financeiro', cor: '#94a3b8' },
+  patrimonial: { label: '🟣 Movimentações Patrimoniais (Fora da DRE)', cor: '#a855f7' },
+  pendente: { label: '⚠️ Pendente de Classificação', cor: '#ef4444' }
+};
+
+export const ATIVIDADES_OPERACIONAIS = [
+  'Mecânica Geral',
+  'Revisão Preventiva',
+  'Troca de Óleo & Filtros',
+  'Freios, Suspensão & Direção',
+  'Diagnóstico & Elétrica',
+  'Ar-Condicionado',
+  'Injeção Eletrônica',
+  'Venda de Peças',
+  'Serviço Terceirizado',
+  'Administrativo / Geral'
+];
+
+export const CENTROS_DE_CUSTO = [
+  'Operacional Oficina',
+  'Administrativo & Gestão',
+  'Comercial & Marketing',
+  'Diretoria & Sócios'
+];
 
 export const LISTA_SOCIOS = ['Rafael', 'Thaís', 'Ákysa'];
 
@@ -172,6 +232,8 @@ export function sugerirClassificacao(item, tipoOrigem = 'fluxo_caixa_saida') {
         categoria_dre: 'PRO_LABORE_SOCIOS',
         subcategoria_dre: `Pró-Labore — ${socioDetectado}`,
         socio_nome: socioDetectado,
+        atividade_operacional: 'Administrativo / Geral',
+        centro_custo: 'Diretoria & Sócios',
         confianca: 'alta'
       };
     }
@@ -180,6 +242,8 @@ export function sugerirClassificacao(item, tipoOrigem = 'fluxo_caixa_saida') {
         categoria_dre: 'DISTRIBUICAO_LUCROS',
         subcategoria_dre: `Distribuição de Lucros — ${socioDetectado}`,
         socio_nome: socioDetectado,
+        atividade_operacional: 'Administrativo / Geral',
+        centro_custo: 'Diretoria & Sócios',
         confianca: 'alta'
       };
     }
@@ -188,24 +252,29 @@ export function sugerirClassificacao(item, tipoOrigem = 'fluxo_caixa_saida') {
         categoria_dre: 'APORTE_EMPRESTIMO_SOCIO',
         subcategoria_dre: `Movimentação Patrimonial — ${socioDetectado}`,
         socio_nome: socioDetectado,
+        atividade_operacional: 'Administrativo / Geral',
+        centro_custo: 'Diretoria & Sócios',
         confianca: 'alta'
       };
     }
-    // Padrão semanal para sócio
     return {
       categoria_dre: 'PRO_LABORE_SOCIOS',
       subcategoria_dre: `Retirada Periódica — ${socioDetectado}`,
       socio_nome: socioDetectado,
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Diretoria & Sócios',
       confianca: 'media'
     };
   }
 
   // 2. Se for Entrada no Caixa
   if (tipoOrigem === 'fluxo_caixa_entrada') {
-    if (desc.includes('entrada') || desc.includes('sinal')) {
+    if (desc.includes('entrada') || desc.includes('sinal') || desc.includes('adiantamento')) {
       return {
         categoria_dre: 'ADIANTAMENTO_CLIENTE',
         subcategoria_dre: 'Sinal / Adiantamento de Cliente',
+        atividade_operacional: 'Mecânica Geral',
+        centro_custo: 'Operacional Oficina',
         confianca: 'alta'
       };
     }
@@ -213,86 +282,261 @@ export function sugerirClassificacao(item, tipoOrigem = 'fluxo_caixa_saida') {
       return {
         categoria_dre: 'APORTE_EMPRESTIMO_SOCIO',
         subcategoria_dre: 'Aporte Financeiro / Empréstimo',
+        atividade_operacional: 'Administrativo / Geral',
+        centro_custo: 'Diretoria & Sócios',
         confianca: 'alta'
       };
     }
-    if (desc.includes('orçamento') || desc.includes('orcamento') || desc.includes('quitação') || desc.includes('serviço')) {
-      // Recebimento de serviço faturado
+    if (desc.includes('oleo') || desc.includes('óleo') || desc.includes('filtro')) {
       return {
-        categoria_dre: 'RECEITA_BRUTA_MO',
-        subcategoria_dre: 'Recebimento de Atendimento',
+        categoria_dre: 'RECEITA_TROCA_OLEO',
+        subcategoria_dre: 'Troca de Óleo & Filtros',
+        atividade_operacional: 'Troca de Óleo & Filtros',
+        centro_custo: 'Operacional Oficina',
         confianca: 'alta'
       };
     }
+    if (desc.includes('freio') || desc.includes('pastilha') || desc.includes('disco') || desc.includes('suspensao') || desc.includes('amortecedor')) {
+      return {
+        categoria_dre: 'RECEITA_FREIOS_SUSPENSAO',
+        subcategoria_dre: 'Freios, Suspensão & Direção',
+        atividade_operacional: 'Freios, Suspensão & Direção',
+        centro_custo: 'Operacional Oficina',
+        confianca: 'alta'
+      };
+    }
+    if (desc.includes('revisao') || desc.includes('revisão') || desc.includes('check')) {
+      return {
+        categoria_dre: 'RECEITA_REVISAO_PREVENTIVA',
+        subcategoria_dre: 'Revisão Preventiva / Check-up',
+        atividade_operacional: 'Revisão Preventiva',
+        centro_custo: 'Operacional Oficina',
+        confianca: 'alta'
+      };
+    }
+    if (desc.includes('eletrica') || desc.includes('elétrica') || desc.includes('injecao') || desc.includes('injeção') || desc.includes('scanner') || desc.includes('diagnostico')) {
+      return {
+        categoria_dre: 'RECEITA_DIAGNOSTICO_ELETRICA',
+        subcategoria_dre: 'Diagnóstico & Elétrica / Injeção',
+        atividade_operacional: 'Diagnóstico & Elétrica',
+        centro_custo: 'Operacional Oficina',
+        confianca: 'alta'
+      };
+    }
+    if (desc.includes('peca') || desc.includes('peça')) {
+      return {
+        categoria_dre: 'RECEITA_BRUTA_PECAS',
+        subcategoria_dre: 'Venda de Peças Faturadas',
+        atividade_operacional: 'Venda de Peças',
+        centro_custo: 'Operacional Oficina',
+        confianca: 'alta'
+      };
+    }
+    if (desc.includes('rendimento') || desc.includes('aplicacao') || desc.includes('juros')) {
+      return {
+        categoria_dre: 'RECEITA_FINANCEIRA',
+        subcategoria_dre: 'Receitas Financeiras / Rendimentos',
+        atividade_operacional: 'Administrativo / Geral',
+        centro_custo: 'Administrativo & Gestão',
+        confianca: 'alta'
+      };
+    }
+    // Recebimento geral de serviço / atendimento
     return {
-      categoria_dre: 'PENDENTE',
-      subcategoria_dre: 'Entrada a Identificar',
-      confianca: 'baixa'
+      categoria_dre: 'RECEITA_MECANICA_GERAL',
+      subcategoria_dre: 'Mecânica Geral & Serviços',
+      atividade_operacional: 'Mecânica Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'media'
     };
   }
 
   // 3. Regras para Saídas e Despesas
-  if (desc.includes('aluguel')) {
-    return { categoria_dre: 'DESPESA_OCUPACAO', subcategoria_dre: 'Aluguel do Imóvel', confianca: 'alta' };
+  if (desc.includes('aluguel') || desc.includes('galpao') || desc.includes('galpão') || desc.includes('imovel')) {
+    return {
+      categoria_dre: 'DESPESA_OCUPACAO',
+      subcategoria_dre: 'Aluguel do Imóvel',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
   }
   if (desc.includes('enel') || desc.includes('energia') || desc.includes('luz') || desc.includes('compressor')) {
-    return { categoria_dre: 'DESPESA_OCUPACAO', subcategoria_dre: 'Energia Elétrica / Instalações', confianca: 'alta' };
+    return {
+      categoria_dre: 'DESPESA_OCUPACAO',
+      subcategoria_dre: 'Energia Elétrica / Instalações',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
   }
   if (desc.includes('saneago') || desc.includes('água') || desc.includes('agua')) {
-    return { categoria_dre: 'DESPESA_OCUPACAO', subcategoria_dre: 'Água e Saneamento', confianca: 'alta' };
+    return {
+      categoria_dre: 'DESPESA_OCUPACAO',
+      subcategoria_dre: 'Água e Saneamento',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
   }
 
-  // Peças
-  if (desc.includes('peça') || desc.includes('peca') || desc.includes('auto peça') || desc.includes('escapamento') || desc.includes('oleo') || desc.includes('óleo') || desc.includes('filtro') || desc.includes('amortecedor') || desc.includes('pastilha') || desc.includes('correia')) {
-    return { categoria_dre: 'CUSTO_DIRETO_PECAS', subcategoria_dre: 'Peça Aplicada em Serviço', confianca: 'alta' };
+  // Insumos de oficina
+  if (desc.includes('estopa') || desc.includes('desengraxante') || desc.includes('querosene') || desc.includes('solvente') || desc.includes('luva') || desc.includes('parafuso') || desc.includes('spray') || desc.includes('silicone') || desc.includes('wd40') || desc.includes('fita')) {
+    return {
+      categoria_dre: 'CUSTO_INSUMOS_OFICINA',
+      subcategoria_dre: 'Materiais e Insumos de Oficina',
+      atividade_operacional: 'Mecânica Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
+  }
+
+  // Peças e Componentes Aplicados
+  if (desc.includes('peça') || desc.includes('peca') || desc.includes('auto peça') || desc.includes('escapamento') || desc.includes('oleo') || desc.includes('óleo') || desc.includes('filtro') || desc.includes('amortecedor') || desc.includes('pastilha') || desc.includes('correia') || desc.includes('vela') || desc.includes('bico') || desc.includes('disco') || desc.includes('embreagem') || desc.includes('bateria') || desc.includes('radiador')) {
+    return {
+      categoria_dre: 'CUSTO_DIRETO_PECAS',
+      subcategoria_dre: 'Peça Aplicada em Serviço (CMV)',
+      atividade_operacional: 'Mecânica Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
   }
 
   // Terceirizados
-  if (desc.includes('alinhamento') || desc.includes('balanceamento') || desc.includes('torno') || desc.includes('retifica') || desc.includes('guincho')) {
-    return { categoria_dre: 'CUSTO_DIRETO_TERCEIROS', subcategoria_dre: 'Serviço Terceirizado', confianca: 'alta' };
+  if (desc.includes('alinhamento') || desc.includes('balanceamento') || desc.includes('torno') || desc.includes('retifica') || desc.includes('guincho') || desc.includes('solda') || desc.includes('radiadorista')) {
+    return {
+      categoria_dre: 'CUSTO_DIRETO_TERCEIROS',
+      subcategoria_dre: 'Serviço Terceirizado Especializado',
+      atividade_operacional: 'Serviço Terceirizado',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
   }
 
-  // Pessoal Operacional (ex: Eduardo, Enzo, ajudantes)
-  if (desc.includes('eduardo') || desc.includes('enzo') || desc.includes('mecanico') || desc.includes('quinzena')) {
-    if (desc.includes('almoço') || desc.includes('almoco') || desc.includes('vt') || desc.includes('transporte')) {
-      return { categoria_dre: 'DESPESA_BENEFICIOS_EQUIPE', subcategoria_dre: 'Alimentação e Vale Transporte', confianca: 'alta' };
+  // Pessoal Operacional (ex: Eduardo, Enzo, mecânicos)
+  if (desc.includes('eduardo') || desc.includes('enzo') || desc.includes('mecanico') || desc.includes('mecânico') || desc.includes('ajudante') || desc.includes('quinzena') || desc.includes('diaria') || desc.includes('diária')) {
+    if (desc.includes('almoço') || desc.includes('almoco') || desc.includes('vt') || desc.includes('transporte') || desc.includes('passagem')) {
+      return {
+        categoria_dre: 'DESPESA_BENEFICIOS_EQUIPE',
+        subcategoria_dre: 'Alimentação e Vale Transporte',
+        atividade_operacional: 'Administrativo / Geral',
+        centro_custo: 'Operacional Oficina',
+        confianca: 'alta'
+      };
     }
-    return { categoria_dre: 'CUSTO_PESSOAL_OPERACIONAL', subcategoria_dre: 'Salário / Adiantamento Operacional', confianca: 'alta' };
+    return {
+      categoria_dre: 'CUSTO_PESSOAL_OPERACIONAL',
+      subcategoria_dre: 'Salário / Adiantamento Operacional',
+      atividade_operacional: 'Mecânica Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
+  }
+
+  // Comissões de mecânicos
+  if (desc.includes('comissao') || desc.includes('comissão')) {
+    return {
+      categoria_dre: 'CUSTO_DIRETO_COMISSOES',
+      subcategoria_dre: 'Comissão de Mecânico por Produtividade',
+      atividade_operacional: 'Mecânica Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
   }
 
   // Benefícios e Alimentação
-  if (desc.includes('lanche') || desc.includes('almoço') || desc.includes('almoco') || desc.includes('cafe') || desc.includes('café') || desc.includes('uber')) {
-    return { categoria_dre: 'DESPESA_BENEFICIOS_EQUIPE', subcategoria_dre: 'Alimentação / Deslocamento Equipe', confianca: 'alta' };
+  if (desc.includes('lanche') || desc.includes('almoço') || desc.includes('almoco') || desc.includes('cafe') || desc.includes('café') || desc.includes('uber') || desc.includes('99') || desc.includes('marmita') || desc.includes('padaria')) {
+    return {
+      categoria_dre: 'DESPESA_BENEFICIOS_EQUIPE',
+      subcategoria_dre: 'Alimentação / Deslocamento Equipe',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
+  }
+
+  // Comercial e Marketing
+  if (desc.includes('anuncio') || desc.includes('anúncio') || desc.includes('marketing') || desc.includes('trafego') || desc.includes('tráfego') || desc.includes('instagram') || desc.includes('google') || desc.includes('facebook') || desc.includes('panfleto') || desc.includes('banner') || desc.includes('athena')) {
+    return {
+      categoria_dre: 'DESPESA_COMERCIAL',
+      subcategoria_dre: 'Marketing & Divulgação',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Comercial & Marketing',
+      confianca: 'alta'
+    };
   }
 
   // Tributos e Taxas
-  if (desc.includes('taxa') || desc.includes('juceg') || desc.includes('imposto') || desc.includes('simples') || desc.includes('prefeitura') || desc.includes('solo') || desc.includes('alvara')) {
-    return { categoria_dre: 'DEDUCOES_TRIBUTOS', subcategoria_dre: 'Tributos e Taxas Oficiais', confianca: 'alta' };
+  if (desc.includes('taxa') || desc.includes('juceg') || desc.includes('imposto') || desc.includes('simples') || desc.includes('das') || desc.includes('iss') || desc.includes('prefeitura') || desc.includes('solo') || desc.includes('alvara') || desc.includes('alvará')) {
+    return {
+      categoria_dre: 'DEDUCOES_TRIBUTOS',
+      subcategoria_dre: 'Tributos e Taxas Oficiais',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Administrativo & Gestão',
+      confianca: 'alta'
+    };
   }
 
   // Reembolsos e cancelamentos
   if (desc.includes('reembolso') || desc.includes('estorno') || desc.includes('devolucao') || desc.includes('devolução')) {
-    return { categoria_dre: 'CANCELAMENTOS_DEVOLUCOES', subcategoria_dre: 'Reembolso de Serviço', confianca: 'alta' };
+    return {
+      categoria_dre: 'CANCELAMENTOS_DEVOLUCOES',
+      subcategoria_dre: 'Reembolso de Serviço / Peça',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'alta'
+    };
   }
 
   // Sistemas e Software
-  if (desc.includes('sistema') || desc.includes('software') || desc.includes('contabilidade') || desc.includes('contador') || desc.includes('internet') || desc.includes('celular')) {
-    return { categoria_dre: 'DESPESA_ADMINISTRATIVA', subcategoria_dre: 'Gestão, Contabilidade & Conectividade', confianca: 'alta' };
+  if (desc.includes('sistema') || desc.includes('software') || desc.includes('contabilidade') || desc.includes('contador') || desc.includes('internet') || desc.includes('celular') || desc.includes('vivo') || desc.includes('claro')) {
+    return {
+      categoria_dre: 'DESPESA_ADMINISTRATIVA',
+      subcategoria_dre: 'Gestão, Contabilidade & Conectividade',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Administrativo & Gestão',
+      confianca: 'alta'
+    };
   }
 
-  // Ferramentas e Mobilia
-  if (desc.includes('ferramenta') || desc.includes('mobilia') || desc.includes('mesa') || desc.includes('armario')) {
-    return { categoria_dre: 'MANUTENCAO_FERRAMENTAL', subcategoria_dre: 'Ferramental e Infraestrutura', confianca: 'media' };
+  // Ferramentas e Infraestrutura
+  if (desc.includes('ferramenta') || desc.includes('elevador') || desc.includes('macaco') || desc.includes('chave') || desc.includes('scanner') || desc.includes('mobilia') || desc.includes('mesa') || desc.includes('armario')) {
+    return {
+      categoria_dre: 'MANUTENCAO_FERRAMENTAL',
+      subcategoria_dre: 'Ferramental e Infraestrutura',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Operacional Oficina',
+      confianca: 'media'
+    };
   }
 
   // Despesa Financeira
-  if (desc.includes('tarifa') || desc.includes('juros') || desc.includes('cartao') || desc.includes('taxa maquina')) {
-    return { categoria_dre: 'DESPESA_FINANCEIRA', subcategoria_dre: 'Tarifas e Taxas Financeiras', confianca: 'alta' };
+  if (desc.includes('tarifa') || desc.includes('juros') || desc.includes('cartao') || desc.includes('cartão') || desc.includes('taxa maquina') || desc.includes('ted') || desc.includes('pix taxa')) {
+    return {
+      categoria_dre: 'DESPESA_FINANCEIRA',
+      subcategoria_dre: 'Tarifas e Taxas Financeiras',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Administrativo & Gestão',
+      confianca: 'alta'
+    };
+  }
+
+  // Transferência entre contas
+  if (desc.includes('transferencia') || desc.includes('transferência') || desc.includes('transf') || desc.includes('troco')) {
+    return {
+      categoria_dre: 'TRANSFERENCIA_CONTAS',
+      subcategoria_dre: 'Transferência de Saldo / Caixa',
+      atividade_operacional: 'Administrativo / Geral',
+      centro_custo: 'Administrativo & Gestão',
+      confianca: 'alta'
+    };
   }
 
   return {
     categoria_dre: 'PENDENTE',
     subcategoria_dre: 'Aguardando Classificação Manual',
+    atividade_operacional: 'Administrativo / Geral',
+    centro_custo: 'Operacional Oficina',
     confianca: 'baixa'
   };
 }
@@ -424,9 +668,15 @@ export function calcularDRE({
       const savedClass = classMap.get(launchId);
       const autoSuggestion = sugerirClassificacao(s, 'fluxo_caixa_saida');
 
-      const categoriaFinal = savedClass ? savedClass.categoria_dre : autoSuggestion.categoria_dre;
-      const subcategoriaFinal = savedClass ? savedClass.subcategoria_dre : autoSuggestion.subcategoria_dre;
-      const socioFinal = savedClass ? savedClass.socio_nome : autoSuggestion.socio_nome;
+      const categoriaFinal = savedClass 
+        ? savedClass.categoria_dre 
+        : (s.categoria_dre && s.categoria_dre !== 'PENDENTE' ? s.categoria_dre : autoSuggestion.categoria_dre);
+      const subcategoriaFinal = savedClass 
+        ? savedClass.subcategoria_dre 
+        : (s.subcategoria_dre || autoSuggestion.subcategoria_dre);
+      const socioFinal = savedClass 
+        ? savedClass.socio_nome 
+        : (s.socio_nome || autoSuggestion.socio_nome);
       const isPendente = categoriaFinal === 'PENDENTE';
 
       const itemObj = {
@@ -439,7 +689,9 @@ export function calcularDRE({
         categoria_dre: categoriaFinal,
         subcategoria_dre: subcategoriaFinal,
         socio_nome: socioFinal,
-        isAuto: !savedClass,
+        atividade_operacional: s.atividade_operacional || autoSuggestion.atividade_operacional,
+        centro_custo: s.centro_custo || autoSuggestion.centro_custo,
+        isAuto: !savedClass && !s.categoria_dre,
         confianca: autoSuggestion.confianca
       };
 
@@ -475,9 +727,15 @@ export function calcularDRE({
       const savedClass = classMap.get(launchId);
       const autoSuggestion = sugerirClassificacao(e, 'fluxo_caixa_entrada');
 
-      const categoriaFinal = savedClass ? savedClass.categoria_dre : autoSuggestion.categoria_dre;
-      const subcategoriaFinal = savedClass ? savedClass.subcategoria_dre : autoSuggestion.subcategoria_dre;
-      const socioFinal = savedClass ? savedClass.socio_nome : autoSuggestion.socio_nome;
+      const categoriaFinal = savedClass 
+        ? savedClass.categoria_dre 
+        : (e.categoria_dre && e.categoria_dre !== 'PENDENTE' ? e.categoria_dre : autoSuggestion.categoria_dre);
+      const subcategoriaFinal = savedClass 
+        ? savedClass.subcategoria_dre 
+        : (e.subcategoria_dre || autoSuggestion.subcategoria_dre);
+      const socioFinal = savedClass 
+        ? savedClass.socio_nome 
+        : (e.socio_nome || autoSuggestion.socio_nome);
 
       const itemObj = {
         id: launchId,
@@ -490,7 +748,9 @@ export function calcularDRE({
         categoria_dre: categoriaFinal,
         subcategoria_dre: subcategoriaFinal,
         socio_nome: socioFinal,
-        isAuto: !savedClass,
+        atividade_operacional: e.atividade_operacional || autoSuggestion.atividade_operacional,
+        centro_custo: e.centro_custo || autoSuggestion.centro_custo,
+        isAuto: !savedClass && !e.categoria_dre,
         confianca: autoSuggestion.confianca
       };
 
@@ -503,6 +763,14 @@ export function calcularDRE({
         }
       } else if (categoriaFinal === 'RECEITA_FINANCEIRA') {
         itensClassificadosPorCategoria.RECEITA_FINANCEIRA.push(itemObj);
+      } else if (categoriaFinal === 'ADIANTAMENTO_CLIENTE') {
+        itensClassificadosPorCategoria.ADIANTAMENTO_CLIENTE.push(itemObj);
+      } else if (categoriaFinal.startsWith('RECEITA_')) {
+        // Se for receita direta do caixa avulsa (fora de OS faturada)
+        if (!itensClassificadosPorCategoria[categoriaFinal]) {
+          itensClassificadosPorCategoria[categoriaFinal] = [];
+        }
+        itensClassificadosPorCategoria[categoriaFinal].push(itemObj);
       }
       // Nota: Recebimentos de orçamentos no caixa NÃO somam na receita da DRE para não duplicar,
       // pois a receita por competência já foi apurada no bloco 1 (orçamentos concluídos)!
@@ -595,7 +863,12 @@ export function calcularDRE({
   const sumCat = (catId) => (itensClassificadosPorCategoria[catId] || []).reduce((acc, i) => acc + (parseFloat(i.valor) || 0), 0);
 
   // 1. Receita Operacional Bruta
-  const totReceitaMO = sumCat('RECEITA_BRUTA_MO');
+  const totReceitaMO = sumCat('RECEITA_BRUTA_MO') +
+    sumCat('RECEITA_MECANICA_GERAL') +
+    sumCat('RECEITA_REVISAO_PREVENTIVA') +
+    sumCat('RECEITA_TROCA_OLEO') +
+    sumCat('RECEITA_FREIOS_SUSPENSAO') +
+    sumCat('RECEITA_DIAGNOSTICO_ELETRICA');
   const totReceitaPecas = sumCat('RECEITA_BRUTA_PECAS');
   const receitaOperacionalBruta = totReceitaMO + totReceitaPecas;
 
@@ -674,9 +947,14 @@ export function calcularDRE({
         percentual: 100,
         tipo: 'header_positivo',
         sublinhas: [
-          { nome: 'Receita de Mão de Obra (Serviços Concluídos)', valor: totReceitaMO, itens: itensClassificadosPorCategoria.RECEITA_BRUTA_MO },
+          { nome: 'Receita de Mão de Obra (Serviços Concluídos)', valor: sumCat('RECEITA_BRUTA_MO'), itens: itensClassificadosPorCategoria.RECEITA_BRUTA_MO },
+          { nome: 'Mecânica Geral & Motor', valor: sumCat('RECEITA_MECANICA_GERAL'), itens: itensClassificadosPorCategoria.RECEITA_MECANICA_GERAL },
+          { nome: 'Revisão Preventiva / Check-up', valor: sumCat('RECEITA_REVISAO_PREVENTIVA'), itens: itensClassificadosPorCategoria.RECEITA_REVISAO_PREVENTIVA },
+          { nome: 'Troca de Óleo & Filtros', valor: sumCat('RECEITA_TROCA_OLEO'), itens: itensClassificadosPorCategoria.RECEITA_TROCA_OLEO },
+          { nome: 'Freios, Suspensão & Direção', valor: sumCat('RECEITA_FREIOS_SUSPENSAO'), itens: itensClassificadosPorCategoria.RECEITA_FREIOS_SUSPENSAO },
+          { nome: 'Diagnóstico & Elétrica / Injeção', valor: sumCat('RECEITA_DIAGNOSTICO_ELETRICA'), itens: itensClassificadosPorCategoria.RECEITA_DIAGNOSTICO_ELETRICA },
           { nome: 'Receita de Venda de Peças Faturadas', valor: totReceitaPecas, itens: itensClassificadosPorCategoria.RECEITA_BRUTA_PECAS }
-        ]
+        ].filter(sl => sl.valor > 0 || sl.nome.includes('Peças') || sl.nome.includes('Mão de Obra'))
       },
       {
         id: '2',
