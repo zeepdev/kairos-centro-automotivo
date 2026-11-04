@@ -551,13 +551,22 @@ export function calcularDRE({
   gastosFixos = [],
   classificacoes = [],
   ajustes = [],
-  mesAno = '' // 'YYYY-MM' ou 'YYYY'
+  mesAno = '', // 'YYYY-MM' ou 'YYYY'
+  mes = ''     // alias para mesAno
 }) {
-  const isAnual = mesAno.length === 4;
+  const mesAnoFinal = mesAno || mes || '';
+  const isAnual = mesAnoFinal.length === 4;
 
   // Map rápido de classificações salvas por id
   const classMap = new Map();
-  classificacoes.forEach(c => classMap.set(c.id, c));
+  const classList = Array.isArray(classificacoes) 
+    ? classificacoes 
+    : (classificacoes && typeof classificacoes === 'object' ? Object.values(classificacoes) : []);
+  classList.forEach(c => c && c.id && classMap.set(c.id, c));
+
+  const ajustesList = Array.isArray(ajustes)
+    ? ajustes
+    : (ajustes && typeof ajustes === 'object' ? Object.values(ajustes) : []);
 
   // 1. Filtrar e Processar Orçamentos por Competência (Data de Conclusão / Pagamento)
   const orcamentosCompetencia = (orcamentos || []).filter(o => {
@@ -565,7 +574,7 @@ export function calcularDRE({
     const rawDate = o.data_conclusao || o.data_pagamento || o.created_at;
     if (!rawDate) return false;
     const dateStr = rawDate.substring(0, isAnual ? 4 : 7);
-    if (dateStr !== mesAno) return false;
+    if (dateStr !== mesAnoFinal) return false;
 
     // Apenas orçamentos finalizados ou com serviço concluído contam como receita do período
     const status = (o.status || '').toLowerCase();
@@ -584,10 +593,33 @@ export function calcularDRE({
   const itensCustoPecas = [];
 
   orcamentosCompetencia.forEach(o => {
-    const mo = parseFloat(o.valor_mao_obra) || 0;
-    const pecas = parseFloat(o.valor_pecas) || 0;
-    const comissao = parseFloat(o.valor_comissao) || 0;
-    const custoPeca = parseFloat(o.custo_pecas) || 0;
+    let mo = parseFloat(o.valor_mao_obra) || 0;
+    let pecas = parseFloat(o.valor_pecas) || 0;
+    let comissao = parseFloat(o.valor_comissao) || 0;
+    let custoPeca = parseFloat(o.custo_pecas) || 0;
+
+    // Fallback: se não estiver consolidado nos campos principais, extrair de items[]
+    if (mo === 0 && pecas === 0 && Array.isArray(o.items)) {
+      o.items.forEach(it => {
+        const qtd = parseFloat(it.quantity || it.qtd) || 1;
+        const preco = parseFloat(it.unitPrice || it.unit_price || it.unit || it.valor) || 0;
+        const totalLinha = qtd * preco;
+        const isPart = it.type === 'part' || it.tipo === 'peca';
+        if (isPart) {
+          pecas += totalLinha;
+          const custoUnit = parseFloat(it.costPrice || it.custo || it.preco_custo) || 0;
+          if (custoUnit > 0) {
+            custoPeca += qtd * custoUnit;
+          }
+        } else {
+          mo += totalLinha;
+          const comissaoUnit = parseFloat(it.valor_comissao || it.comissao) || 0;
+          if (comissaoUnit > 0) {
+            comissao += comissaoUnit;
+          }
+        }
+      });
+    }
 
     if (mo > 0) {
       receitaMO += mo;
@@ -653,7 +685,7 @@ export function calcularDRE({
   // Filtrar fluxo de caixa do período
   const diasCaixa = (fluxoCaixa || []).filter(fc => {
     if (!fc.data) return false;
-    const match = isAnual ? fc.data.startsWith(mesAno) : fc.data.startsWith(mesAno);
+    const match = isAnual ? fc.data.startsWith(mesAnoFinal) : fc.data.startsWith(mesAnoFinal);
     return match;
   });
 
@@ -781,7 +813,7 @@ export function calcularDRE({
   const gastosPeriodo = (gastosFixos || []).filter(g => {
     const d = g.mes_competencia || g.data_pagamento || g.data_vencimento;
     if (!d) return false;
-    const match = isAnual ? d.startsWith(mesAno) : d.startsWith(mesAno);
+    const match = isAnual ? d.startsWith(mesAnoFinal) : d.startsWith(mesAnoFinal);
     return match && (g.status === 'pago' || g.valor_pago_real > 0);
   });
 
@@ -833,7 +865,7 @@ export function calcularDRE({
   });
 
   // 4. Somar Ajustes Contábeis Auditáveis do Mês
-  const ajustesPeriodo = (ajustes || []).filter(a => a.mes_ano === mesAno);
+  const ajustesPeriodo = ajustesList.filter(a => a.mes_ano === mesAnoFinal);
   ajustesPeriodo.forEach(a => {
     const val = parseFloat(a.valor) || 0;
     const itemObj = {
@@ -842,7 +874,7 @@ export function calcularDRE({
       descricao: `${a.descricao} [Resp: ${a.responsavel}]`,
       valor: val,
       categoria_dre: a.categoria_dre,
-      data: a.created_at ? a.created_at.substring(0, 10) : mesAno + '-01'
+      data: a.created_at ? a.created_at.substring(0, 10) : mesAnoFinal + '-01'
     };
     if (!itensClassificadosPorCategoria[a.categoria_dre]) {
       itensClassificadosPorCategoria[a.categoria_dre] = [];
@@ -923,14 +955,71 @@ export function calcularDRE({
   const resultadoFinanceiroCaixa = totalEntradasCaixaMes - totalSaidasCaixaMes;
   const diferencaCompetenciaCaixa = lucroLiquido - resultadoFinanceiroCaixa;
 
+  // 12. Margem de Contribuição e Ponto de Equilíbrio Operacional
+  const custosVariaveis = totCustoPecas + totComissoes + totTerceiros + totInsumosOficina;
+  const margemContribuicao = Math.max(0, receitaOperacionalLiquida - custosVariaveis);
+  const margemContribuicaoPercent = receitaOperacionalLiquida > 0 ? (margemContribuicao / receitaOperacionalLiquida) * 100 : 0;
+  const despesasFixasEstruturais = totOcupacao + totPessoalOperacional + totAdmin + totComercial + totBeneficiosEquipe + totProLabore + totManutencao;
+  const pontoEquilibrio = margemContribuicaoPercent > 0 ? (despesasFixasEstruturais / (margemContribuicaoPercent / 100)) : 0;
+
+  // 13. Desempenho por Atividade Operacional
+  const atividadesOperacionaisResumo = [
+    {
+      id: 'mecanica_geral',
+      nome: 'Mecânica Geral & Motor',
+      icone: '⚙️',
+      faturamento: sumCat('RECEITA_MECANICA_GERAL') + sumCat('RECEITA_BRUTA_MO'),
+      percentual: receitaOperacionalBruta > 0 ? ((sumCat('RECEITA_MECANICA_GERAL') + sumCat('RECEITA_BRUTA_MO')) / receitaOperacionalBruta) * 100 : 0
+    },
+    {
+      id: 'revisao_preventiva',
+      nome: 'Revisão Preventiva / Check-up',
+      icone: '🔧',
+      faturamento: sumCat('RECEITA_REVISAO_PREVENTIVA'),
+      percentual: receitaOperacionalBruta > 0 ? (sumCat('RECEITA_REVISAO_PREVENTIVA') / receitaOperacionalBruta) * 100 : 0
+    },
+    {
+      id: 'troca_oleo',
+      nome: 'Troca de Óleo & Filtros',
+      icone: '🛢️',
+      faturamento: sumCat('RECEITA_TROCA_OLEO'),
+      percentual: receitaOperacionalBruta > 0 ? (sumCat('RECEITA_TROCA_OLEO') / receitaOperacionalBruta) * 100 : 0
+    },
+    {
+      id: 'freios_suspensao',
+      nome: 'Freios, Suspensão & Direção',
+      icone: '🛑',
+      faturamento: sumCat('RECEITA_FREIOS_SUSPENSAO'),
+      percentual: receitaOperacionalBruta > 0 ? (sumCat('RECEITA_FREIOS_SUSPENSAO') / receitaOperacionalBruta) * 100 : 0
+    },
+    {
+      id: 'diagnostico_eletrica',
+      nome: 'Diagnóstico Eletrônico & Injeção',
+      icone: '⚡',
+      faturamento: sumCat('RECEITA_DIAGNOSTICO_ELETRICA'),
+      percentual: receitaOperacionalBruta > 0 ? (sumCat('RECEITA_DIAGNOSTICO_ELETRICA') / receitaOperacionalBruta) * 100 : 0
+    },
+    {
+      id: 'pecas_faturadas',
+      nome: 'Venda de Peças Faturadas',
+      icone: '📦',
+      faturamento: totReceitaPecas,
+      percentual: receitaOperacionalBruta > 0 ? (totReceitaPecas / receitaOperacionalBruta) * 100 : 0
+    }
+  ];
+
   return {
-    periodo: mesAno,
+    periodo: mesAnoFinal,
     isAnual,
     indicadores: {
       receitaBruta: receitaOperacionalBruta,
       receitaLiquida: receitaOperacionalLiquida,
       lucroBruto,
       margemBrutaPercent,
+      margemContribuicao,
+      margemContribuicaoPercent,
+      despesasFixasEstruturais,
+      pontoEquilibrio,
       resultadoOperacional,
       margemOperacionalPercent,
       resultadoFinanceiro,
@@ -939,6 +1028,7 @@ export function calcularDRE({
       totalDistribuicaoLucros: totDistribuicaoLucros,
       saldoLucroRetido
     },
+    atividades: atividadesOperacionaisResumo,
     linhasDRE: [
       {
         id: '1',
@@ -1047,4 +1137,84 @@ export function calcularDRE({
     pendencias,
     itensPorCategoria: itensClassificadosPorCategoria
   };
+}
+
+// ==============================================================================
+// 6. ANÁLISE HORIZONTAL (COMPARATIVO VS MÊS ANTERIOR)
+// ==============================================================================
+
+export function calcularAnaliseHorizontal(dreAtual, dreAnterior) {
+  if (!dreAtual || !dreAnterior) return null;
+
+  const calcVar = (valAtual = 0, valAnt = 0) => {
+    const diff = valAtual - valAnt;
+    const perc = valAnt !== 0 ? (diff / Math.abs(valAnt)) * 100 : (valAtual > 0 ? 100 : 0);
+    return {
+      nominal: diff,
+      percentual: perc,
+      tendencia: diff > 0 ? 'alta' : (diff < 0 ? 'queda' : 'estavel')
+    };
+  };
+
+  return {
+    receitaLiquida: calcVar(dreAtual.indicadores?.receitaLiquida, dreAnterior.indicadores?.receitaLiquida),
+    lucroBruto: calcVar(dreAtual.indicadores?.lucroBruto, dreAnterior.indicadores?.lucroBruto),
+    resultadoOperacional: calcVar(dreAtual.indicadores?.resultadoOperacional, dreAnterior.indicadores?.resultadoOperacional),
+    lucroLiquido: calcVar(dreAtual.indicadores?.lucroLiquido, dreAnterior.indicadores?.lucroLiquido),
+    margemContribuicao: calcVar(dreAtual.indicadores?.margemContribuicao, dreAnterior.indicadores?.margemContribuicao),
+    pontoEquilibrio: calcVar(dreAtual.indicadores?.pontoEquilibrio, dreAnterior.indicadores?.pontoEquilibrio)
+  };
+}
+
+// ==============================================================================
+// 7. COMPARATIVO ANUAL MÊS A MÊS (EVOLUÇÃO DOS 12 MESES)
+// ==============================================================================
+
+export function calcularComparativoAnual({
+  orcamentos = [],
+  fluxoCaixa = [],
+  gastosFixos = [],
+  classificacoes = [],
+  ajustes = [],
+  ano = new Date().getFullYear().toString()
+}) {
+  const nomesMeses = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  return nomesMeses.map((nome, index) => {
+    const mesNum = String(index + 1).padStart(2, '0');
+    const mesAno = `${ano}-${mesNum}`;
+
+    const dreMes = calcularDRE({
+      orcamentos,
+      fluxoCaixa,
+      gastosFixos,
+      classificacoes,
+      ajustes,
+      mesAno
+    });
+
+    const custosDiretos = dreMes.linhasDRE.find(l => l.id === '4')?.valor || 0;
+    const despesasOperacionais = dreMes.linhasDRE.find(l => l.id === '6')?.valor || 0;
+
+    return {
+      mes: mesAno,
+      mesNome: nome,
+      mesAbrev: nome.slice(0, 3),
+      receitaBruta: dreMes.indicadores.receitaBruta,
+      receitaLiquida: dreMes.indicadores.receitaLiquida,
+      custosDiretos,
+      lucroBruto: dreMes.indicadores.lucroBruto,
+      margemBrutaPercent: dreMes.indicadores.margemBrutaPercent,
+      despesasOperacionais,
+      resultadoOperacional: dreMes.indicadores.resultadoOperacional,
+      margemOperacionalPercent: dreMes.indicadores.margemOperacionalPercent,
+      lucroLiquido: dreMes.indicadores.lucroLiquido,
+      margemLiquidaPercent: dreMes.indicadores.margemLiquidaPercent,
+      pontoEquilibrio: dreMes.indicadores.pontoEquilibrio,
+      temMovimentacao: dreMes.indicadores.receitaBruta > 0 || custosDiretos > 0 || despesasOperacionais > 0
+    };
+  });
 }

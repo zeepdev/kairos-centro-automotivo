@@ -6,7 +6,9 @@ import {
   CATEGORIAS_DRE,
   LISTA_SOCIOS,
   calcularDRE,
-  sugerirClassificacao
+  sugerirClassificacao,
+  calcularAnaliseHorizontal,
+  calcularComparativoAnual
 } from '../../lib/dreCalculator';
 import {
   fetchDREClassificacoes,
@@ -112,6 +114,43 @@ export const DREManager = () => {
       mesAno: periodoAlvo
     });
   }, [orcamentos, fluxoCaixa, gastosFixos, classificacoes, ajustes, selectedMonth, viewMode, fechamento]);
+
+  // Sub-abas da DRE: 'dre' | 'atividades' | 'comparativo_anual'
+  const [dreTab, setDreTab] = useState('dre');
+
+  // 3. DRE do mês anterior (para Análise Horizontal)
+  const dreAnterior = useMemo(() => {
+    if (viewMode !== 'mensal') return null;
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const dateAnt = new Date(year, month - 2, 1);
+    const mesAnt = `${dateAnt.getFullYear()}-${String(dateAnt.getMonth() + 1).padStart(2, '0')}`;
+    return calcularDRE({
+      orcamentos,
+      fluxoCaixa,
+      gastosFixos,
+      classificacoes,
+      ajustes,
+      mesAno: mesAnt
+    });
+  }, [orcamentos, fluxoCaixa, gastosFixos, classificacoes, ajustes, selectedMonth, viewMode]);
+
+  // Análise Horizontal
+  const analiseHorizontal = useMemo(() => {
+    return calcularAnaliseHorizontal(dreResult, dreAnterior);
+  }, [dreResult, dreAnterior]);
+
+  // Comparativo dos 12 meses do ano
+  const comparativoAnual = useMemo(() => {
+    const ano = selectedMonth.substring(0, 4);
+    return calcularComparativoAnual({
+      orcamentos,
+      fluxoCaixa,
+      gastosFixos,
+      classificacoes,
+      ajustes,
+      ano
+    });
+  }, [orcamentos, fluxoCaixa, gastosFixos, classificacoes, ajustes, selectedMonth]);
 
   // Alternar expansão de linha
   const toggleRow = (rowId) => {
@@ -529,113 +568,295 @@ export const DREManager = () => {
         </div>
       )}
 
-      {/* 3. CARDS DE INDICADORES EXECUTIVOS (KPIs) */}
+      {/* 3. CARDS DE INDICADORES EXECUTIVOS (KPIs com Análise Horizontal e Ponto de Equilíbrio) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '16px',
-        marginBottom: '26px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+        gap: '14px',
+        marginBottom: '24px'
       }}>
-        {/* Receita Líquida */}
+        {/* Card 1: Receita Líquida */}
         <div style={{
           background: '#111116',
           border: '1px solid #22222c',
           borderRadius: '12px',
-          padding: '18px 20px',
-          borderLeft: '4px solid #3b82f6'
+          padding: '16px 18px',
+          borderLeft: '4px solid #3b82f6',
+          position: 'relative'
         }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
-            Receita Operacional Líquida
-          </span>
-          <div style={{ fontSize: '1.45rem', fontWeight: '800', color: '#fff', marginTop: '6px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
+              Receita Operacional Líquida
+            </span>
+            {analiseHorizontal?.receitaLiquida && analiseHorizontal.receitaLiquida.percentual !== 0 && (
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 'bold',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: analiseHorizontal.receitaLiquida.nominal >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                color: analiseHorizontal.receitaLiquida.nominal >= 0 ? '#10b981' : '#ef4444'
+              }}>
+                {analiseHorizontal.receitaLiquida.nominal >= 0 ? '▲ +' : '▼ '}
+                {analiseHorizontal.receitaLiquida.percentual.toFixed(1)}% vs mês ant.
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#fff', marginTop: '6px' }}>
             {formatCurrency(dreResult.indicadores.receitaLiquida)}
           </div>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
             Bruta: {formatCurrency(dreResult.indicadores.receitaBruta)}
           </div>
         </div>
 
-        {/* Lucro Bruto & Margem Bruta */}
+        {/* Card 2: Margem Bruta */}
         <div style={{
           background: '#111116',
           border: '1px solid #22222c',
           borderRadius: '12px',
-          padding: '18px 20px',
+          padding: '16px 18px',
           borderLeft: '4px solid #f59e0b'
         }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
-            Lucro Bruto (Margem Bruta)
-          </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
+              Lucro Bruto (Margem Bruta)
+            </span>
+            {analiseHorizontal?.lucroBruto && analiseHorizontal.lucroBruto.percentual !== 0 && (
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 'bold',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: analiseHorizontal.lucroBruto.nominal >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                color: analiseHorizontal.lucroBruto.nominal >= 0 ? '#10b981' : '#ef4444'
+              }}>
+                {analiseHorizontal.lucroBruto.nominal >= 0 ? '▲ +' : '▼ '}
+                {analiseHorizontal.lucroBruto.percentual.toFixed(1)}%
+              </span>
+            )}
+          </div>
           <div style={{
-            fontSize: '1.45rem',
+            fontSize: '1.4rem',
             fontWeight: '800',
             color: dreResult.indicadores.lucroBruto >= 0 ? '#f59e0b' : '#ef4444',
             marginTop: '6px'
           }}>
             {formatCurrency(dreResult.indicadores.lucroBruto)}
           </div>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
             Margem Bruta: {dreResult.indicadores.margemBrutaPercent.toFixed(1)}%
           </div>
         </div>
 
-        {/* Resultado Operacional (EBITDA) */}
+        {/* Card 3: Ponto de Equilíbrio Operacional */}
         <div style={{
           background: '#111116',
           border: '1px solid #22222c',
           borderRadius: '12px',
-          padding: '18px 20px',
+          padding: '16px 18px',
+          borderLeft: '4px solid #06b6d4'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
+              Ponto de Equilíbrio (Break-Even)
+            </span>
+            {dreResult.indicadores.receitaLiquida >= dreResult.indicadores.pontoEquilibrio && dreResult.indicadores.pontoEquilibrio > 0 ? (
+              <span style={{ fontSize: '0.68rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
+                ✓ Coberto
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.68rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                Em Aberto
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#06b6d4', marginTop: '6px' }}>
+            {formatCurrency(dreResult.indicadores.pontoEquilibrio)}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+            Custos Fixos: {formatCurrency(dreResult.indicadores.despesasFixasEstruturais || 0)}
+          </div>
+        </div>
+
+        {/* Card 4: EBITDA / LAJIDA */}
+        <div style={{
+          background: '#111116',
+          border: '1px solid #22222c',
+          borderRadius: '12px',
+          padding: '16px 18px',
           borderLeft: '4px solid #8b5cf6'
         }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
-            Resultado Operacional (EBITDA)
-          </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
+              EBITDA (Resultado Operacional)
+            </span>
+            {analiseHorizontal?.resultadoOperacional && analiseHorizontal.resultadoOperacional.percentual !== 0 && (
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 'bold',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: analiseHorizontal.resultadoOperacional.nominal >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                color: analiseHorizontal.resultadoOperacional.nominal >= 0 ? '#10b981' : '#ef4444'
+              }}>
+                {analiseHorizontal.resultadoOperacional.nominal >= 0 ? '▲ +' : '▼ '}
+                {analiseHorizontal.resultadoOperacional.percentual.toFixed(1)}%
+              </span>
+            )}
+          </div>
           <div style={{
-            fontSize: '1.45rem',
+            fontSize: '1.4rem',
             fontWeight: '800',
             color: dreResult.indicadores.resultadoOperacional >= 0 ? '#8b5cf6' : '#ef4444',
             marginTop: '6px'
           }}>
             {formatCurrency(dreResult.indicadores.resultadoOperacional)}
           </div>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
             Margem Operacional: {dreResult.indicadores.margemOperacionalPercent.toFixed(1)}%
           </div>
         </div>
 
-        {/* Lucro Líquido do Exercício */}
+        {/* Card 5: Lucro Líquido do Exercício */}
         <div style={{
           background: '#111116',
           border: '1px solid #22222c',
           borderRadius: '12px',
-          padding: '18px 20px',
+          padding: '16px 18px',
           borderLeft: `4px solid ${dreResult.indicadores.lucroLiquido >= 0 ? '#10b981' : '#dc2626'}`
         }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
-            Lucro Líquido do Exercício
-          </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
+              Lucro Líquido do Exercício
+            </span>
+            {analiseHorizontal?.lucroLiquido && analiseHorizontal.lucroLiquido.percentual !== 0 && (
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 'bold',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: analiseHorizontal.lucroLiquido.nominal >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                color: analiseHorizontal.lucroLiquido.nominal >= 0 ? '#10b981' : '#ef4444'
+              }}>
+                {analiseHorizontal.lucroLiquido.nominal >= 0 ? '▲ +' : '▼ '}
+                {analiseHorizontal.lucroLiquido.percentual.toFixed(1)}%
+              </span>
+            )}
+          </div>
           <div style={{
-            fontSize: '1.45rem',
+            fontSize: '1.4rem',
             fontWeight: '800',
             color: dreResult.indicadores.lucroLiquido >= 0 ? '#10b981' : '#ef4444',
             marginTop: '6px'
           }}>
             {formatCurrency(dreResult.indicadores.lucroLiquido)}
           </div>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
             Margem Líquida: {dreResult.indicadores.margemLiquidaPercent.toFixed(1)}%
+          </div>
+        </div>
+
+        {/* Card 6: Saldo Retido vs Sócios */}
+        <div style={{
+          background: '#111116',
+          border: '1px solid #22222c',
+          borderRadius: '12px',
+          padding: '16px 18px',
+          borderLeft: '4px solid #a855f7'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
+              Lucro Retido na Oficina
+            </span>
+            <span style={{ fontSize: '0.68rem', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px', background: 'rgba(168,85,247,0.15)', color: '#c084fc' }}>
+              Patrimonial
+            </span>
+          </div>
+          <div style={{
+            fontSize: '1.4rem',
+            fontWeight: '800',
+            color: dreResult.indicadores.saldoLucroRetido >= 0 ? '#a855f7' : '#ef4444',
+            marginTop: '6px'
+          }}>
+            {formatCurrency(dreResult.indicadores.saldoLucroRetido)}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+            Distribuído: {formatCurrency(dreResult.indicadores.totalDistribuicaoLucros || 0)}
           </div>
         </div>
       </div>
 
-      {/* 4. TABELA HIERÁRQUICA ESTRUTURADA DA DRE */}
-      <div style={{
-        background: '#111116',
-        borderRadius: '12px',
-        border: '1px solid #22222c',
-        overflow: 'hidden',
-        marginBottom: '26px'
-      }}>
+      {/* NAVEGAÇÃO DE SUB-ABAS DA DRE */}
+      <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid #22222a', paddingBottom: '12px', marginBottom: '22px', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => setDreTab('dre')}
+          style={{
+            background: dreTab === 'dre' ? 'rgba(220,39,67,0.15)' : 'transparent',
+            border: dreTab === 'dre' ? '1px solid #dc2743' : '1px solid #2a2a35',
+            color: dreTab === 'dre' ? '#fff' : '#888',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          📑 Demonstrativo DRE Analítico
+        </button>
+
+        <button
+          onClick={() => setDreTab('atividades')}
+          style={{
+            background: dreTab === 'atividades' ? 'rgba(59,130,246,0.15)' : 'transparent',
+            border: dreTab === 'atividades' ? '1px solid #3b82f6' : '1px solid #2a2a35',
+            color: dreTab === 'atividades' ? '#fff' : '#888',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          🛠️ Desempenho por Atividade ({dreResult.atividades?.length || 0})
+        </button>
+
+        <button
+          onClick={() => setDreTab('comparativo_anual')}
+          style={{
+            background: dreTab === 'comparativo_anual' ? 'rgba(16,185,129,0.15)' : 'transparent',
+            border: dreTab === 'comparativo_anual' ? '1px solid #10b981' : '1px solid #2a2a35',
+            color: dreTab === 'comparativo_anual' ? '#fff' : '#888',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          📅 Evolução Anual (Jan a Dez)
+        </button>
+      </div>
+
+      {/* 4. TABELA HIERÁRQUICA ESTRUTURADA DA DRE (VISÃO ANALÍTICA) */}
+      {dreTab === 'dre' && (
+        <>
+          <div style={{
+            background: '#111116',
+            borderRadius: '12px',
+            border: '1px solid #22222c',
+            overflow: 'hidden',
+            marginBottom: '26px'
+          }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 100px 180px',
@@ -925,8 +1146,227 @@ export const DREManager = () => {
           </div>
         </div>
       </div>
+      </>
+    )}
 
-      {/* 6. MODAL DE REVISÃO E CLASSIFICAÇÃO DE LANÇAMENTOS */}
+      {/* 5. VISÃO POR ATIVIDADE OPERACIONAL */}
+      {dreTab === 'atividades' && (
+        <div style={{ marginBottom: '26px' }}>
+          <div style={{ background: '#111116', border: '1px solid #22222c', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🛠️ Mix de Receitas e Participação por Atividade Operacional
+            </h3>
+            <p style={{ margin: 0, color: '#888', fontSize: '0.82rem' }}>
+              Identifique quais especialidades mais contribuem para o faturamento e rentabilidade da Kairós Centro Automotivo no período selecionado.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+            {(dreResult.atividades || []).map((atv) => (
+              <div 
+                key={atv.id}
+                style={{
+                  background: '#111116',
+                  border: '1px solid #22222c',
+                  borderRadius: '12px',
+                  padding: '18px 20px',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.3rem' }}>{atv.icone}</span>
+                    <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.92rem' }}>{atv.nome}</span>
+                  </div>
+                  <span style={{
+                    fontSize: '0.78rem',
+                    fontWeight: 'bold',
+                    color: '#3b82f6',
+                    background: 'rgba(59,130,246,0.12)',
+                    padding: '3px 8px',
+                    borderRadius: '6px'
+                  }}>
+                    {atv.percentual.toFixed(1)}% do faturamento
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#10b981', marginBottom: '10px' }}>
+                  {formatCurrency(atv.faturamento)}
+                </div>
+
+                {/* Barra de Progresso Visual */}
+                <div style={{ width: '100%', height: '8px', background: '#22222a', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div 
+                    style={{ 
+                      width: `${Math.min(100, Math.max(atv.percentual > 0 ? 3 : 0, atv.percentual))}%`, 
+                      height: '100%', 
+                      background: 'linear-gradient(90deg, #3b82f6 0%, #10b981 100%)',
+                      borderRadius: '4px'
+                    }} 
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Dicas Gerenciais de Oficina Mecânica */}
+          <div style={{ background: '#111116', border: '1px solid #22222c', borderRadius: '12px', padding: '20px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#f59e0b', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              💡 Recomendações Contábeis & Gerenciais para a Oficina
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px', fontSize: '0.82rem', color: '#aaa' }}>
+              <div style={{ background: '#16161e', padding: '12px', borderRadius: '8px', border: '1px solid #252532' }}>
+                <strong style={{ color: '#fff', display: 'block', marginBottom: '4px' }}>🛢️ Troca de Óleo & Revisão Rápida</strong>
+                Serviços de alto giro e retenção. Possuem excelente margem de contribuição imediata e servem de porta de entrada para diagnósticos maiores.
+              </div>
+              <div style={{ background: '#16161e', padding: '12px', borderRadius: '8px', border: '1px solid #252532' }}>
+                <strong style={{ color: '#fff', display: 'block', marginBottom: '4px' }}>🛑 Freios & Suspensão</strong>
+                Geralmente combinam peças e mão de obra de valor agregado. Monitore o CMV das peças para não comprimir a margem de contribuição.
+              </div>
+              <div style={{ background: '#16161e', padding: '12px', borderRadius: '8px', border: '1px solid #252532' }}>
+                <strong style={{ color: '#fff', display: 'block', marginBottom: '4px' }}>⚡ Diagnóstico & Injeção Eletrônica</strong>
+                Atividade de alta margem de mão de obra (baixo CMV de peças), alavancando a rentabilidade do time técnico da oficina.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. VISÃO COMPARATIVA ANUAL (EVOLUÇÃO DOS 12 MESES) */}
+      {dreTab === 'comparativo_anual' && (
+        <div style={{ marginBottom: '26px' }}>
+          <div style={{ background: '#111116', border: '1px solid #22222c', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              📅 Evolução Anual Consolidada (Exercício {selectedMonth.substring(0, 4)})
+            </h3>
+            <p style={{ margin: 0, color: '#888', fontSize: '0.82rem' }}>
+              Acompanhe o desempenho mês a mês de Janeiro a Dezembro. Clique em qualquer mês para carregá-lo no Demonstrativo Analítico.
+            </p>
+          </div>
+
+          <div style={{
+            background: '#111116',
+            borderRadius: '12px',
+            border: '1px solid #22222c',
+            overflowX: 'auto',
+            marginBottom: '20px'
+          }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ background: '#0d0d12', borderBottom: '1px solid #22222c', color: '#94a3b8', textTransform: 'uppercase', fontSize: '0.72rem' }}>
+                  <th style={{ padding: '12px 16px' }}>Mês</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Receita Líquida</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Custos (CSP/CMV)</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Lucro Bruto</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Despesas Fixas</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>EBITDA</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Lucro Líquido</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Margem %</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Ponto Equilíbrio</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center' }}>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparativoAnual.map((m) => {
+                  const isCurrent = m.mes === selectedMonth;
+                  const isLucro = m.lucroLiquido >= 0;
+
+                  return (
+                    <tr
+                      key={m.mes}
+                      style={{
+                        borderBottom: '1px solid #1c1c24',
+                        background: isCurrent ? 'rgba(220,39,67,0.08)' : (m.temMovimentacao ? 'transparent' : 'rgba(255,255,255,0.01)'),
+                        color: m.temMovimentacao ? '#fff' : '#666'
+                      }}
+                    >
+                      <td style={{ padding: '12px 16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{m.mesNome}</span>
+                        {isCurrent && (
+                          <span style={{ fontSize: '0.68rem', background: '#dc2743', color: '#fff', padding: '1px 5px', borderRadius: '4px' }}>
+                            Ativo
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: '600' }}>
+                        {formatCurrency(m.receitaLiquida)}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', color: '#f87171' }}>
+                        {formatCurrency(m.custosDiretos)}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', color: '#f59e0b', fontWeight: '600' }}>
+                        {formatCurrency(m.lucroBruto)}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', color: '#cbd5e1' }}>
+                        {formatCurrency(m.despesasOperacionais)}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', color: m.resultadoOperacional >= 0 ? '#8b5cf6' : '#ef4444', fontWeight: '600' }}>
+                        {formatCurrency(m.resultadoOperacional)}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 'bold', color: isLucro ? '#10b981' : '#ef4444' }}>
+                        {formatCurrency(m.lucroLiquido)}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', color: isLucro ? '#34d399' : '#f87171' }}>
+                        {m.margemLiquidaPercent.toFixed(1)}%
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right', color: '#06b6d4' }}>
+                        {formatCurrency(m.pontoEquilibrio)}
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <button
+                          onClick={() => {
+                            setSelectedMonth(m.mes);
+                            setDreTab('dre');
+                          }}
+                          style={{
+                            background: isCurrent ? '#dc2743' : 'rgba(255,255,255,0.06)',
+                            color: '#fff',
+                            border: '1px solid #333',
+                            borderRadius: '6px',
+                            padding: '4px 10px',
+                            fontSize: '0.74rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Ver Detalhes
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                {(() => {
+                  const totReceita = comparativoAnual.reduce((acc, m) => acc + m.receitaLiquida, 0);
+                  const totCustos = comparativoAnual.reduce((acc, m) => acc + m.custosDiretos, 0);
+                  const totBruto = comparativoAnual.reduce((acc, m) => acc + m.lucroBruto, 0);
+                  const totDesp = comparativoAnual.reduce((acc, m) => acc + m.despesasOperacionais, 0);
+                  const totEbitda = comparativoAnual.reduce((acc, m) => acc + m.resultadoOperacional, 0);
+                  const totLucro = comparativoAnual.reduce((acc, m) => acc + m.lucroLiquido, 0);
+                  const margemTotal = totReceita > 0 ? (totLucro / totReceita) * 100 : 0;
+
+                  return (
+                    <tr style={{ background: '#0a0a0e', borderTop: '2px solid #333', fontWeight: 'bold' }}>
+                      <td style={{ padding: '14px 16px', color: '#fff' }}>TOTAL ACUMULADO ({selectedMonth.substring(0, 4)})</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: '#10b981' }}>{formatCurrency(totReceita)}</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: '#f87171' }}>{formatCurrency(totCustos)}</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: '#f59e0b' }}>{formatCurrency(totBruto)}</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: '#cbd5e1' }}>{formatCurrency(totDesp)}</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: totEbitda >= 0 ? '#8b5cf6' : '#ef4444' }}>{formatCurrency(totEbitda)}</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: totLucro >= 0 ? '#10b981' : '#ef4444' }}>{formatCurrency(totLucro)}</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: totLucro >= 0 ? '#34d399' : '#f87171' }}>{margemTotal.toFixed(1)}%</td>
+                      <td style={{ padding: '14px 14px', textAlign: 'right', color: '#06b6d4' }}>-</td>
+                      <td style={{ padding: '14px 16px', textAlign: 'center' }}>-</td>
+                    </tr>
+                  );
+                })()}
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 7. MODAL DE REVISÃO E CLASSIFICAÇÃO DE LANÇAMENTOS */}
       {showClassifyModal && (
         <div style={{
           position: 'fixed',

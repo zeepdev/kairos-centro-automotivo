@@ -255,7 +255,7 @@ const formatCurrency = (val) => {
 export const DREPDF = ({ dreData, emitidoPor = 'Gestão Kairós' }) => {
   if (!dreData) return null;
 
-  const { periodo, indicadores, linhasDRE, socios, conciliacao } = dreData;
+  const { periodo, indicadores, linhasDRE, socios, conciliacao, atividades } = dreData;
   const isLucroPositivo = indicadores.lucroLiquido >= 0;
 
   return (
@@ -305,13 +305,17 @@ export const DREPDF = ({ dreData, emitidoPor = 'Gestão Kairós' }) => {
             <Text style={styles.kpiValue}>{indicadores.margemBrutaPercent.toFixed(1)}%</Text>
           </View>
           <View style={styles.kpiCard}>
-            <Text style={styles.kpiLabel}>Resultado Operacional (EBITDA)</Text>
+            <Text style={styles.kpiLabel}>Ponto de Equilíbrio</Text>
+            <Text style={styles.kpiValue}>{formatCurrency(indicadores.pontoEquilibrio || 0)}</Text>
+          </View>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiLabel}>EBITDA (Operacional)</Text>
             <Text style={styles.kpiValue}>{formatCurrency(indicadores.resultadoOperacional)}</Text>
           </View>
           <View style={[styles.kpiCard, { borderColor: isLucroPositivo ? '#10b981' : '#ef4444' }]}>
             <Text style={styles.kpiLabel}>Lucro Líquido</Text>
             <Text style={[styles.kpiValue, { color: isLucroPositivo ? '#059669' : '#dc2626' }]}>
-              {formatCurrency(indicadores.lucroLiquido)}
+              {formatCurrency(indicadores.lucroLiquido)} ({indicadores.margemLiquidaPercent.toFixed(1)}%)
             </Text>
           </View>
         </View>
@@ -363,6 +367,26 @@ export const DREPDF = ({ dreData, emitidoPor = 'Gestão Kairós' }) => {
             );
           })}
         </View>
+
+        {/* Mix de Especialidades Automotivas */}
+        {Array.isArray(atividades) && atividades.some(a => a.faturamento > 0) && (
+          <View style={{ marginBottom: 12 }}>
+            <Text style={styles.sectionTitle}>Mix de Faturamento por Especialidade Automotiva</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {atividades
+                .filter(item => item.faturamento > 0)
+                .map((item) => (
+                  <View key={item.id} style={[styles.socioCard, { flex: undefined, width: '31%', padding: 5 }]}>
+                    <Text style={{ fontSize: 7.5, fontWeight: 'bold', color: '#1e293b' }}>{item.nome}</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 3 }}>
+                      <Text style={{ fontSize: 7, color: '#64748b' }}>{item.percentual.toFixed(1)}%</Text>
+                      <Text style={{ fontSize: 7, fontWeight: 'bold', color: '#0f172a' }}>{formatCurrency(item.faturamento)}</Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          </View>
+        )}
 
         {/* Seção dos Sócios */}
         <Text style={styles.sectionTitle}>Movimentações dos Sócios no Período</Text>
