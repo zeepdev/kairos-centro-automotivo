@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { pdf } from '@react-pdf/renderer';
 import { DREPDF } from './DREPDF';
+import PlanejamentoManager from './PlanejamentoManager';
 import {
   CATEGORIAS_DRE,
   LISTA_SOCIOS,
@@ -845,6 +846,25 @@ export const DREManager = () => {
         >
           📅 Evolução Anual (Jan a Dez)
         </button>
+
+        <button
+          onClick={() => setDreTab('planejamento')}
+          style={{
+            background: dreTab === 'planejamento' ? 'rgba(139,92,246,0.15)' : 'transparent',
+            border: dreTab === 'planejamento' ? '1px solid #8b5cf6' : '1px solid #2a2a35',
+            color: dreTab === 'planejamento' ? '#fff' : '#888',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          🎯 Metas & Planejamento
+        </button>
       </div>
 
       {/* 4. TABELA HIERÁRQUICA ESTRUTURADA DA DRE (VISÃO ANALÍTICA) */}
@@ -1363,6 +1383,12 @@ export const DREManager = () => {
               </tfoot>
             </table>
           </div>
+        </div>
+      )}
+
+      {dreTab === 'planejamento' && (
+        <div style={{ marginTop: '10px' }}>
+          <PlanejamentoManager />
         </div>
       )}
 

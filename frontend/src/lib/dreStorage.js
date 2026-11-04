@@ -220,3 +220,47 @@ export async function deleteDREAJuste(id) {
 
   return true;
 }
+
+// ==========================================
+// 4. METAS E ORÇAMENTO EMPRESARIAL
+// ==========================================
+
+const LS_METAS = 'kadosh_financeiro_metas';
+
+export async function fetchFinanceiroMetas(mesAno) {
+  try {
+    const { data, error } = await supabase
+      .from('financeiro_metas')
+      .select('*')
+      .eq('mes_ano', mesAno)
+      .maybeSingle();
+
+    if (!error && data) {
+      const local = getLocalItem(LS_METAS, {});
+      local[mesAno] = data;
+      setLocalItem(LS_METAS, local);
+      return data;
+    }
+  } catch (e) {}
+
+  const local = getLocalItem(LS_METAS, {});
+  return local[mesAno] || null;
+}
+
+export async function saveFinanceiroMetas(mesAno, dadosMetas) {
+  const payload = {
+    mes_ano: mesAno,
+    ...dadosMetas,
+    updated_at: new Date().toISOString()
+  };
+
+  const local = getLocalItem(LS_METAS, {});
+  local[mesAno] = payload;
+  setLocalItem(LS_METAS, local);
+
+  try {
+    await supabase.from('financeiro_metas').upsert([payload]);
+  } catch (e) {}
+
+  return payload;
+}

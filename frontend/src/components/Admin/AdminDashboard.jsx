@@ -12,6 +12,7 @@ import MecanicosManager from './MecanicosManager';
 import FluxoCaixa from './FluxoCaixa';
 import GastosFixos from './GastosFixos';
 import DREManager from './DREManager';
+import PlanejamentoManager from './PlanejamentoManager';
 import ErrorBoundary from '../ErrorBoundary';
 import { supabase } from '../../lib/supabase';
 import { calcularPrioridade, PRIORIDADES } from '../../lib/prioridade';
@@ -683,6 +684,16 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
             📊 DRE — Demonstrativo
           </button>
           <button 
+            onClick={() => setActiveTab('planejamento')}
+            style={{ 
+              padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none',
+              background: activeTab === 'planejamento' ? '#8b5cf6' : '#222',
+              color: '#fff', fontWeight: 'bold'
+            }}
+          >
+            🎯 Metas & Planejamento
+          </button>
+          <button 
             onClick={() => setActiveTab('mecanicos')}
             style={{ 
               padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none',
@@ -913,6 +924,13 @@ const AdminDashboard = ({ initialTab = 'atendimentos', initialSubTab = 'diario' 
           <ErrorBoundary moduleName="DRE — Demonstrativo">
             <div className="glass" style={{ padding: '30px', marginBottom: '30px' }}>
               <DREManager />
+            </div>
+          </ErrorBoundary>
+        )}
+        {activeTab === 'planejamento' && (
+          <ErrorBoundary moduleName="Metas & Planejamento">
+            <div className="glass" style={{ padding: '30px', marginBottom: '30px' }}>
+              <PlanejamentoManager />
             </div>
           </ErrorBoundary>
         )}
