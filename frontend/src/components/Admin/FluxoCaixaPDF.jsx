@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
   page: {
@@ -190,6 +190,26 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e9ecef',
     paddingTop: 8,
+  },
+  comprovanteSection: {
+    marginTop: 14,
+    padding: 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  comprovanteTitle: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#ae0d05',
+    marginBottom: 6,
+  },
+  comprovanteImage: {
+    maxHeight: 250,
+    objectFit: 'contain',
+    alignSelf: 'center',
+    borderRadius: 4,
   }
 });
 
@@ -225,9 +245,10 @@ export const FluxoCaixaPDF = ({ data }) => {
   let dinheiroEmpresaAnterior = 0;
   let fundoReservaAnterior = 0;
   let textoObservacoes = '';
+  let comprovanteUrl = data.comprovante_url || null;
 
   if (data.observacoes) {
-    const trimmed = data.observacoes.trim();
+    const trimmed = typeof data.observacoes === 'string' ? data.observacoes.trim() : '';
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -235,6 +256,9 @@ export const FluxoCaixaPDF = ({ data }) => {
         dinheiroEmpresaAnterior = parseFloat(parsed.dinheiro_empresa_anterior) || 0;
         fundoReservaAnterior = parseFloat(parsed.fundo_reserva_anterior) || 0;
         textoObservacoes = parsed.texto || '';
+        if (!comprovanteUrl && parsed.comprovante_url) {
+          comprovanteUrl = parsed.comprovante_url;
+        }
       } catch (e) {
         textoObservacoes = data.observacoes;
       }
@@ -406,6 +430,14 @@ export const FluxoCaixaPDF = ({ data }) => {
           <View style={styles.notesSection}>
             <Text style={styles.notesTitle}>Observações / Anotações do Dia</Text>
             <Text style={styles.notesText}>{textoObservacoes}</Text>
+          </View>
+        )}
+
+        {/* Print da Conta Bancária */}
+        {comprovanteUrl && typeof comprovanteUrl === 'string' && (comprovanteUrl.startsWith('http') || comprovanteUrl.startsWith('data:image')) && (
+          <View style={styles.comprovanteSection} wrap={false}>
+            <Text style={styles.comprovanteTitle}>📸 Comprovante Anexo: Print da Conta Bancária (Extrato/Saldo)</Text>
+            <Image src={comprovanteUrl} style={styles.comprovanteImage} />
           </View>
         )}
 

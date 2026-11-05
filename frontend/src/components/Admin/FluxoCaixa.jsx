@@ -41,6 +41,23 @@ const formatIsoDate = (d) => {
   }
 };
 
+// Obter URL do print da conta (comprovante bancário) com tolerância a formatos
+const getComprovanteUrl = (item) => {
+  if (!item) return null;
+  if (item.comprovante_url && typeof item.comprovante_url === 'string' && item.comprovante_url.trim()) {
+    return item.comprovante_url.trim();
+  }
+  if (item.observacoes) {
+    try {
+      const parsed = typeof item.observacoes === 'string' ? JSON.parse(item.observacoes) : item.observacoes;
+      if (parsed && parsed.comprovante_url && typeof parsed.comprovante_url === 'string' && parsed.comprovante_url.trim()) {
+        return parsed.comprovante_url.trim();
+      }
+    } catch {}
+  }
+  return null;
+};
+
 // Sub-componente do Gráfico Anual Animado
 const AnnualBarChart = ({ monthsData = [], selectedYear, maxMonthValue = 1, formatCurrency, onSelectMonth, expandedMonth }) => {
   const [hoveredMonth, setHoveredMonth] = useState(null);
@@ -331,6 +348,13 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
   const [fundoReservaFinal, setFundoReservaFinal] = useState('');
 
   const [observacoes, setObservacoes] = useState('');
+
+  // Print da Conta / Comprovante do Fechamento
+  const [comprovanteFile, setComprovanteFile] = useState(null);
+  const [comprovantePreview, setComprovantePreview] = useState('');
+  const [comprovanteUrl, setComprovanteUrl] = useState('');
+  const [uploadingComprovante, setUploadingComprovante] = useState(false);
+  const [modalImage, setModalImage] = useState(null); // { url, title, date }
 
   // Histórico de fechamentos e controles
   const [historico, setHistorico] = useState(() => {
@@ -713,6 +737,10 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
           if (draft.dinheiroEmpresaFinal != null) setDinheiroEmpresaFinal(String(draft.dinheiroEmpresaFinal));
           if (draft.fundoReservaFinal != null) setFundoReservaFinal(String(draft.fundoReservaFinal));
           if (draft.observacoes != null) setObservacoes(String(draft.observacoes));
+          if (draft.comprovanteUrl) {
+            setComprovanteUrl(String(draft.comprovanteUrl));
+            setComprovantePreview(String(draft.comprovanteUrl));
+          }
         }
       }
     } catch (e) {
@@ -732,7 +760,8 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
       fundoCaixaFinal,
       dinheiroEmpresaFinal,
       fundoReservaFinal,
-      observacoes
+      observacoes,
+      comprovanteUrl: comprovanteUrl || ''
     };
     localStorage.setItem('kadosh_fluxo_caixa_draft', JSON.stringify(draft));
 
@@ -763,7 +792,7 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     return () => clearTimeout(timer);
   }, [
     dataCaixa, fundoCaixaAnterior, dinheiroEmpresaAnterior, fundoReservaAnterior,
-    entradas, saidas, fundoCaixaFinal, dinheiroEmpresaFinal, fundoReservaFinal, observacoes
+    entradas, saidas, fundoCaixaFinal, dinheiroEmpresaFinal, fundoReservaFinal, observacoes, comprovanteUrl
   ]);
 
   // Cálculos Automáticos Baseados nos Lançamentos
@@ -952,9 +981,126 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     setDinheiroEmpresaFinal('');
     setFundoReservaFinal('');
     setObservacoes('');
+    setComprovanteFile(null);
+    setComprovantePreview('');
+    setComprovanteUrl('');
 
     alert('Novo dia de caixa iniciado!');
   };
+
+  // Upload do comprovante para o Supabase Storage com fallback resiliente
+  const uploadComprovanteFile = async (file) => {
+    if (!file) return null;
+    const ext = file.name ? file.name.split('.').pop() : 'png';
+    const cleanExt = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(ext?.toLowerCase()) ? ext.toLowerCase() : 'png';
+    const datePrefix = dataCaixa ? dataCaixa.replace(/[^0-9]/g, '') : 'caixa';
+    const fileName = `print_${datePrefix}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${cleanExt}`;
+    const filePath = `fechamentos/${fileName}`;
+
+    // 1. Tentar bucket principal comprovantes_caixa
+    try {
+      const { data: upData, error: upErr } = await supabase.storage
+        .from('comprovantes_caixa')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      if (!upErr && upData) {
+        const { data: pubData } = supabase.storage
+          .from('comprovantes_caixa')
+          .getPublicUrl(filePath);
+        if (pubData?.publicUrl) return pubData.publicUrl;
+      } else if (upErr) {
+        console.warn('Tentativa bucket comprovantes_caixa:', upErr?.message || upErr);
+      }
+    } catch (err1) {
+      console.warn('Erro ao subir no bucket comprovantes_caixa:', err1);
+    }
+
+    // 2. Fallback: bucket fotos_servico
+    try {
+      const { data: upData2, error: upErr2 } = await supabase.storage
+        .from('fotos_servico')
+        .upload(`fechamentos/${fileName}`, file, { cacheControl: '3600', upsert: true });
+
+      if (!upErr2 && upData2) {
+        const { data: pubData2 } = supabase.storage
+          .from('fotos_servico')
+          .getPublicUrl(`fechamentos/${fileName}`);
+        if (pubData2?.publicUrl) return pubData2.publicUrl;
+      }
+    } catch (err2) {
+      console.warn('Exceção no fallback fotos_servico:', err2);
+    }
+
+    // 3. Fallback seguro em base64 (se for <= 2MB)
+    return new Promise((resolve) => {
+      if (file.size > 2 * 1024 * 1024) {
+        console.warn('Arquivo muito grande para base64 fallback (>2MB)');
+        resolve(null);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Seleção de arquivo de imagem pelo input
+  const handleComprovanteChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('⚠️ Por favor, selecione apenas arquivos de imagem (PNG, JPG, JPEG, WEBP).');
+      return;
+    }
+    setComprovanteFile(file);
+    const preview = URL.createObjectURL(file);
+    setComprovantePreview(preview);
+  };
+
+  // Drag and drop de imagem
+  const handleComprovanteDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('⚠️ Por favor, arraste apenas arquivos de imagem.');
+      return;
+    }
+    setComprovanteFile(file);
+    const preview = URL.createObjectURL(file);
+    setComprovantePreview(preview);
+  };
+
+  // Remover imagem selecionada
+  const handleRemoveComprovante = () => {
+    setComprovanteFile(null);
+    setComprovantePreview('');
+    setComprovanteUrl('');
+  };
+
+  // Colar print diretamente da área de transferência (Ctrl+V)
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type && items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            setComprovanteFile(file);
+            const preview = URL.createObjectURL(file);
+            setComprovantePreview(preview);
+            setComprovanteUrl('');
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, []);
 
   // Upload manual do PDF gerado para o Google Drive
   const handleManualUploadDrive = async (closingData) => {
@@ -1009,11 +1155,29 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     const entradasValidas = entradas.filter(item => item.descricao && item.valor);
     const saidasValidas = saidas.filter(item => item.descricao && item.valor);
 
+    // Upload do print da conta caso novo arquivo tenha sido anexado
+    let finalComprovanteUrl = comprovanteUrl || null;
+    if (comprovanteFile) {
+      setUploadingComprovante(true);
+      try {
+        const uploaded = await uploadComprovanteFile(comprovanteFile);
+        if (uploaded) {
+          finalComprovanteUrl = uploaded;
+          setComprovanteUrl(uploaded);
+        }
+      } catch (errUpload) {
+        console.error('Falha no upload do print da conta:', errUpload);
+      } finally {
+        setUploadingComprovante(false);
+      }
+    }
+
     const obsJsonString = JSON.stringify({
       fundo_caixa_anterior: parseFloat(fundoCaixaAnterior) || 0,
       dinheiro_empresa_anterior: parseFloat(dinheiroEmpresaAnterior) || 0,
       fundo_reserva_anterior: parseFloat(fundoReservaAnterior) || 0,
-      texto: observacoes
+      texto: observacoes,
+      comprovante_url: finalComprovanteUrl
     });
 
     const payload = {
@@ -1024,7 +1188,8 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
       fundo_reserva: valReservaFinal,
       entradas: entradasValidas,
       saidas: saidasValidas,
-      observacoes: obsJsonString
+      observacoes: obsJsonString,
+      comprovante_url: finalComprovanteUrl
     };
 
     try {
@@ -1211,6 +1376,9 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
     setDinheiroEmpresaFinal('');
     setFundoReservaFinal('');
     setObservacoes('');
+    setComprovanteFile(null);
+    setComprovantePreview('');
+    setComprovanteUrl('');
     setEntradas([{ 
       descricao: '', 
       valor: '', 
@@ -1980,6 +2148,188 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                 </div>
               </div>
 
+              {/* Anexo de Imagem / Print da Conta Bancária */}
+              <div style={{
+                marginBottom: '22px',
+                padding: '16px',
+                background: '#121217',
+                borderRadius: '10px',
+                border: '1px solid #2a2a35'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                  <label style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    📸 Print da Conta Bancária (Extrato / Saldo do Dia)
+                  </label>
+                  {(comprovantePreview || comprovanteUrl) && (
+                    <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ✓ Print Anexado
+                    </span>
+                  )}
+                </div>
+                
+                <p style={{ margin: '0 0 12px 0', fontSize: '0.78rem', color: '#9ca3af', lineHeight: 1.4 }}>
+                  Anexe aqui o print do saldo ou extrato da conta bancária (Mercado Pago, Nubank, etc.), igual você enviava no grupo do WhatsApp. Ele ficará salvo no histórico e no PDF do fechamento.
+                </p>
+
+                {/* Se já houver imagem selecionada / carregada */}
+                {comprovantePreview || comprovanteUrl ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    padding: '12px',
+                    background: '#0a0a0e',
+                    border: '1px solid #3b82f640',
+                    borderRadius: '8px',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div 
+                      onClick={() => setModalImage({ url: comprovantePreview || comprovanteUrl, title: 'Print da Conta Bancária (Prévia)', date: dataCaixa })}
+                      style={{
+                        position: 'relative',
+                        width: '90px',
+                        height: '90px',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        border: '1px solid #3b82f6',
+                        flexShrink: 0
+                      }}
+                      title="Clique para ampliar o print"
+                    >
+                      <img 
+                        src={comprovantePreview || comprovanteUrl} 
+                        alt="Prévia do print" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: 'rgba(0,0,0,0.7)',
+                        color: '#60a5fa',
+                        fontSize: '0.65rem',
+                        textAlign: 'center',
+                        padding: '2px 0'
+                      }}>
+                        🔍 Zoom
+                      </div>
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: '180px' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600, marginBottom: '4px' }}>
+                        {comprovanteFile ? comprovanteFile.name : 'Print bancário anexado'}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '10px' }}>
+                        {comprovanteFile ? `${(comprovanteFile.size / 1024).toFixed(1)} KB` : 'Salvo no banco de dados'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => setModalImage({ url: comprovantePreview || comprovanteUrl, title: 'Print da Conta Bancária', date: dataCaixa })}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#1e293b',
+                            border: '1px solid #3b82f6',
+                            color: '#60a5fa',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🔍 Ver Ampliado
+                        </button>
+                        <label style={{
+                          padding: '6px 12px',
+                          background: '#22222e',
+                          border: '1px solid #444',
+                          color: '#ddd',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center'
+                        }}>
+                          🔄 Trocar Print
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleComprovanteChange} 
+                            style={{ display: 'none' }} 
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleRemoveComprovante}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#ef444415',
+                            border: '1px solid #ef444450',
+                            color: '#f87171',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🗑️ Remover
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Dropzone quando ainda não há print */
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={handleComprovanteDrop}
+                    style={{
+                      border: '2px dashed #3b82f650',
+                      borderRadius: '8px',
+                      padding: '20px 15px',
+                      textAlign: 'center',
+                      background: '#0d0d12',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => document.getElementById('input-comprovante-caixa')?.click()}
+                  >
+                    <input 
+                      id="input-comprovante-caixa"
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleComprovanteChange} 
+                      style={{ display: 'none' }} 
+                    />
+                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📸</div>
+                    <div style={{ color: '#fff', fontSize: '0.88rem', fontWeight: 600, marginBottom: '4px' }}>
+                      Clique para escolher o print do extrato / saldo
+                    </div>
+                    <div style={{ color: '#888', fontSize: '0.75rem', marginBottom: '8px' }}>
+                      ou arraste o print da conta para cá (PNG, JPG, JPEG)
+                    </div>
+                    <div style={{
+                      display: 'inline-block',
+                      background: '#1a1a24',
+                      border: '1px solid #333',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      color: '#60a5fa',
+                      fontSize: '0.72rem'
+                    }}>
+                      💡 Você também pode tirar print e colar com <strong>Ctrl + V</strong>
+                    </div>
+                  </div>
+                )}
+
+                {uploadingComprovante && (
+                  <div style={{ marginTop: '8px', color: '#60a5fa', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>⏳</span> Enviando print da conta para o armazenamento seguro...
+                  </div>
+                )}
+              </div>
+
               {/* Observações */}
               <div className="form-group" style={{ marginBottom: '25px' }}>
                 <label style={{ color: '#aaa', fontSize: '0.85rem' }}>Observações / Anotações do Dia</label>
@@ -2009,8 +2359,10 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                       fundo_caixa_anterior: parseFloat(fundoCaixaAnterior) || 0,
                       dinheiro_empresa_anterior: parseFloat(dinheiroEmpresaAnterior) || 0,
                       fundo_reserva_anterior: parseFloat(fundoReservaAnterior) || 0,
-                      texto: observacoes
-                    })
+                      texto: observacoes,
+                      comprovante_url: comprovantePreview || comprovanteUrl || null
+                    }),
+                    comprovante_url: comprovantePreview || comprovanteUrl || null
                   })} 
                   className="btn" style={{ background: '#3b82f6', fontWeight: 'bold' }}
                 >
@@ -2030,8 +2382,10 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                       fundo_caixa_anterior: parseFloat(fundoCaixaAnterior) || 0,
                       dinheiro_empresa_anterior: parseFloat(dinheiroEmpresaAnterior) || 0,
                       fundo_reserva_anterior: parseFloat(fundoReservaAnterior) || 0,
-                      texto: observacoes
-                    })
+                      texto: observacoes,
+                      comprovante_url: comprovantePreview || comprovanteUrl || null
+                    }),
+                    comprovante_url: comprovantePreview || comprovanteUrl || null
                   })} 
                   className="btn" style={{ background: '#f59e0b', color: '#000', fontWeight: 'bold' }}
                   disabled={driveUploadStatus === 'loading'}
@@ -2110,7 +2464,17 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                             Saldo: <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>{formatCurrency(sReal)}</span>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '5px' }}>
+                        <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                          {getComprovanteUrl(item) && (
+                            <button 
+                              type="button"
+                              onClick={() => setModalImage({ url: getComprovanteUrl(item), title: 'Print da Conta Bancária', date: item.data })}
+                              style={{ padding: '6px 9px', background: '#8b5cf6', border: 'none', borderRadius: '4px', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold' }}
+                              title="Visualizar print da conta anexado neste fechamento"
+                            >
+                              📸 Print
+                            </button>
+                          )}
                           <button 
                             onClick={() => handleGeneratePDFManual(item)}
                             style={{ padding: '6px 10px', background: '#3b82f6', border: 'none', borderRadius: '4px', cursor: 'pointer', color: '#fff', fontSize: '0.75rem', fontWeight: 'bold' }}
@@ -2343,6 +2707,16 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                                   </div>
 
                                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    {getComprovanteUrl(item) && (
+                                      <button 
+                                        type="button"
+                                        onClick={() => setModalImage({ url: getComprovanteUrl(item), title: 'Print da Conta Bancária', date: item.data })}
+                                        style={{ padding: '6px 12px', background: '#8b5cf6', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#fff', fontSize: '0.8rem', fontWeight: 'bold' }}
+                                        title="Visualizar print da conta bancária anexado"
+                                      >
+                                        📸 Print
+                                      </button>
+                                    )}
                                     <button 
                                       type="button"
                                       onClick={() => setExpandedDayItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
@@ -2853,6 +3227,16 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          {getComprovanteUrl(item) && (
+                            <button 
+                              type="button"
+                              onClick={() => setModalImage({ url: getComprovanteUrl(item), title: 'Print da Conta Bancária', date: item.data })}
+                              style={{ padding: '6px 12px', background: '#8b5cf6', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#fff', fontSize: '0.8rem', fontWeight: 'bold' }}
+                              title="Visualizar print da conta anexado neste fechamento"
+                            >
+                              📸 Ver Print
+                            </button>
+                          )}
                           <button 
                             type="button"
                             onClick={() => setExpandedDayItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
@@ -2918,6 +3302,29 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
                               )}
                             </div>
                           </div>
+
+                          {/* Print da Conta Anexado no Fechamento */}
+                          {getComprovanteUrl(item) && (
+                            <div style={{ marginTop: '15px', paddingTop: '12px', borderTop: '1px solid #22222a', display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                              <div 
+                                onClick={() => setModalImage({ url: getComprovanteUrl(item), title: 'Print da Conta Bancária', date: item.data })}
+                                style={{ width: '70px', height: '70px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: '1px solid #8b5cf6', flexShrink: 0 }}
+                                title="Clique para ampliar o print"
+                              >
+                                <img src={getComprovanteUrl(item)} alt="Print da Conta" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </div>
+                              <div>
+                                <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>📸 Print da Conta Bancária Anexado</div>
+                                <button 
+                                  type="button"
+                                  onClick={() => setModalImage({ url: getComprovanteUrl(item), title: 'Print da Conta Bancária', date: item.data })}
+                                  style={{ marginTop: '4px', background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline', padding: 0 }}
+                                >
+                                  Clique aqui para abrir em tela cheia com zoom
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2933,6 +3340,166 @@ const FluxoCaixa = ({ initialSubTab = 'diario' }) => {
               >
                 Fechar Histórico
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Zoom de Imagem / Print da Conta Bancária */}
+      {modalImage && (
+        <div 
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setModalImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.88)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '20px'
+          }}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#16161f',
+              border: '1px solid #3b82f640',
+              borderRadius: '14px',
+              maxWidth: '92vw',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(59, 130, 246, 0.2)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '14px 20px',
+              borderBottom: '1px solid #2a2a38',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#1a1a24'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.3rem' }}>📸</span>
+                <div>
+                  <h5 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>
+                    {modalImage.title || 'Print da Conta Bancária'}
+                  </h5>
+                  {modalImage.date && (
+                    <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                      Fechamento de {formatIsoDate(modalImage.date)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalImage(null)}
+                style={{
+                  background: '#2d2d3a',
+                  border: 'none',
+                  color: '#fff',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Fechar"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body / Image */}
+            <div style={{
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'auto',
+              background: '#0a0a0f',
+              minHeight: '260px',
+              maxHeight: '72vh'
+            }}>
+              <img 
+                src={modalImage.url} 
+                alt="Print da conta bancária"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '70vh',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)'
+                }}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '12px 20px',
+              borderTop: '1px solid #2a2a38',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#16161f',
+              flexWrap: 'wrap',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '0.78rem', color: '#888' }}>
+                💡 Extrato / Saldo anexado ao fechamento
+              </span>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a
+                  href={modalImage.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={`print_fechamento_${modalImage.date || 'caixa'}.png`}
+                  style={{
+                    padding: '8px 14px',
+                    background: '#3b82f6',
+                    color: '#fff',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  ⬇️ Abrir Original / Baixar
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setModalImage(null)}
+                  style={{
+                    padding: '8px 14px',
+                    background: '#2a2a35',
+                    border: '1px solid #3a3a48',
+                    color: '#eee',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
           </div>
         </div>
